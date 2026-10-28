@@ -26,6 +26,8 @@ It is modeled on the inbox monitor I run for my own freelance work, where pitche
 
 1. **Two ways in.** `Triage.Inbox.Mail` is a Business Service on `EnsLib.EMail.InboundAdapter`: it polls a POP3 mailbox, and `Triage.Util.Mail` turns each `%Net.MailMessage` into a `Triage.Msg.Email` with the sender, the subject, the plain text of the body (an HTML-only message is reduced to text) and the number of attachments. `Triage.Inbox.Folder` does the same for `.eml` files dropped into `/data/inbox/`, for offline runs and tests.
 2. **Two equivalent processes.** `Triage.Process.TriageBPL` is the workflow in BPL, so the diagram in the Management Portal is the documentation: call the agent, record the decision, branch. `Triage.Process.Triage` is the same workflow in ObjectScript. The mail service targets the BPL process, the folder service the ObjectScript one; both can be re-pointed in the portal.
+
+   <img src="docs/bpl.png" alt="The triage workflow in the BPL editor" width="520">
 3. **The agent is a Business Operation.** `Triage.Agent` (`Triage.Operation.Agent`) hosts `Triage.Agent.Classifier`, a declarative `%AI.Agent`: provider `gemini`, model `gemini-3.5-flash-lite`, key from the `GEMINI_API_KEY` environment variable, instructions in the class. Its toolset `Triage.Agent.Tools` gives it two read-only SQL tools, `LookupContact` (known clients, editors, platforms) and `SenderHistory` (earlier decisions for the same domain), and `RecordDecision`, which validates the category, urgency and action. The operation returns a `Triage.Msg.Verdict` with the decision, the reason, the confidence and the session statistics (tool calls, tokens, LLM time), so each agent run is a request and a response in the message trace.
 4. **Two policies travel with the toolset.** `Triage.Policy.OneDecision` (`%AI.Policy.Authorization`) lets `RecordDecision` run once per email even if the model tries again. `Triage.Policy.Audit` (`%AI.Policy.Audit`) writes every tool call, with its arguments, result, duration and outcome, to `Triage_Data.ToolCall`, tagged with the email it was made for.
 5. **Failures are the operation's job.** A rate limit, a timeout or a server error from the LLM provider is retried by the operation itself (`RetryInterval` 20 s, `FailureTimeout` 180 s). If the agent still fails, or records nothing, the process falls back to a `review` verdict: the email reaches a person instead of being dropped. In BPL this is a fault handler around the call.
@@ -49,6 +51,8 @@ scripts/demo.sh                     # sends the eight samples over SMTP, waits f
 The build installs IPM and loads the module with `zpm "load"`; the production starts with IRIS. A minute or two after sending, the samples are decided. Where to look, in the Management Portal at http://localhost:52773/csp/sys/UtilHome.csp (user `_SYSTEM`, password `SYS`):
 
 - **Interoperability → View → Messages**: open any `Triage.Msg.Email` and its trace: the agent's request, its verdict with the reason and statistics, and the operation that acted on it.
+
+  <img src="docs/trace.png" alt="Visual Trace of one email: service, BPL process, agent operation, alert" width="760">
 - **Interoperability → Build → Business Processes → Triage.Process.TriageBPL**: the workflow diagram.
 - **Interoperability → Configure → Production**: the running production; the mail service shows the POP3 server it polls.
 - **System Explorer → SQL**:
