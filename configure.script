@@ -1,0 +1,4 @@
+zn "USER"
+set sc = ##class(Triage.Setup).Configure()
+if 'sc do $System.Status.DisplayError(sc)
+halt

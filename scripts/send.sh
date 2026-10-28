@@ -1,8 +1,8 @@
 #!/bin/sh
-# Drops one or more .eml files into the inbox folder inside the container.
+# Sends .eml files to the triage mailbox through the test SMTP server; python3 inside the IRIS container does the work,
+# so nothing but Docker is needed on the host.
 # Usage: scripts/send.sh data/samples/*.eml
 set -e
 for f in "$@"; do
-  docker cp "$f" iris-inbox-triage:/data/inbox/"$(date +%s%N)-$(basename "$f")"
-  echo "sent $f"
+  docker exec -i iris-inbox-triage python3 /opt/triage/scripts/smtp-send.py < "$f"
 done

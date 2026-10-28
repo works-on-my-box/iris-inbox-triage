@@ -1,0 +1,18 @@
+From: CloudHost Billing <billing@cloudhost.example>
+To: triage@triage.local
+Subject: Invoice #4471 for October
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="inv4471"
+
+--inv4471
+Content-Type: text/plain; charset="utf-8"
+
+Your invoice for October is attached. Amount due: $12.00, charged automatically on November 1. No action is needed.
+
+--inv4471
+Content-Type: application/pdf; name="invoice-4471.pdf"
+Content-Disposition: attachment; filename="invoice-4471.pdf"
+Content-Transfer-Encoding: base64
+
+JVBERi0xLjQKJSBub3QgYSByZWFsIGludm9pY2UsIGp1c3QgYSBzYW1wbGUgYXR0YWNobWVudAo=
+--inv4471--

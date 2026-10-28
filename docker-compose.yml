@@ -1,4 +1,17 @@
 services:
+  mail:
+    # Test mail server for the demo: SMTP 3025, POP3 3110, IMAP 3143, REST API 8080.
+    # Mailboxes triage@triage.local (the inbox the production reads) and owner@triage.local; password = login.
+    image: greenmail/standalone:2.1.3
+    container_name: iris-inbox-triage-mail
+    environment:
+      GREENMAIL_OPTS: -Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=triage:triage@triage.local,owner:owner@triage.local
+    ports:
+      - "127.0.0.1:3025:3025"
+      - "127.0.0.1:3110:3110"
+      - "127.0.0.1:3143:3143"
+      - "127.0.0.1:8080:8080"
+
   iris:
     build:
       context: .
@@ -6,8 +19,21 @@ services:
         IRIS_IMAGE: ${IRIS_IMAGE:-docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2026.3.0AI.154.0}
     container_name: iris-inbox-triage
     restart: unless-stopped
+    depends_on:
+      - mail
+    # Sets the mailbox credentials and server from the environment once IRIS is up.
+    command: ["-a", "/opt/triage/after-start.sh"]
     ports:
       - "127.0.0.1:52773:52773"
       - "127.0.0.1:1972:1972"
     environment:
       - GEMINI_API_KEY
+      # Mailbox the production reads; defaults match the test server above.
+      - MAIL_USER
+      - MAIL_PASSWORD
+      - MAIL_HOST
+      - MAIL_POP3_PORT
+      - MAIL_TLS
+      # Where scripts/send.sh submits the sample emails.
+      - MAIL_SMTP_HOST=${MAIL_SMTP_HOST:-mail}
+      - MAIL_SMTP_PORT=${MAIL_SMTP_PORT:-3025}

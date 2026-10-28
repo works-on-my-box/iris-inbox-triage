@@ -1,4 +1,5 @@
 From: CloudHost Billing <billing@cloudhost.example>
+To: triage@triage.local
 Subject: Payment failed: your server will be suspended in 3 days
 
 Your card ending 4242 was declined for invoice INV-20931 ($9.00).

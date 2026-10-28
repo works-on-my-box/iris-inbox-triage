@@ -1,6 +1,6 @@
 Include %occInclude
 
-/// Demo data and helpers.
+/// Demo data and runtime configuration.
 Class Triage.Setup
 {
 
@@ -13,6 +13,53 @@ ClassMethod Seed() As %Status
     $$$ThrowOnError(##class(Triage.Data.Contact).Add("maria@shopco.example", "client", "Small online shop; asked for a price scraper in September"))
     $$$ThrowOnError(##class(Triage.Data.Contact).Add("news@weeklydigest.example", "vendor", "Newsletter the owner subscribed to"))
     Return $$$OK
+}
+
+/// Runs when the container starts (after-start.sh): mailbox credentials from MAIL_USER / MAIL_PASSWORD and,
+/// when MAIL_HOST is set, the server settings of Triage.Inbox.Mail (MAIL_HOST, MAIL_POP3_PORT, MAIL_TLS=1)
+/// as system default settings, so the production definition itself stays untouched.
+ClassMethod Configure() As %Status
+{
+    $$$ThrowOnError(##class(Ens.Config.Credentials).SetCredential("TriageMail", ..Env("MAIL_USER", "triage"), ..Env("MAIL_PASSWORD", "triage"), 1))
+    Set host = ..Env("MAIL_HOST", "")
+    If host '= "" {
+        Set tls = ..Env("MAIL_TLS", "0") = "1"
+        If tls $$$ThrowOnError(..EnsureTLS())
+        Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "POP3Server", host)
+        Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "POP3Port", ..Env("MAIL_POP3_PORT", $Select(tls: 995, 1: 110)))
+        Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "SSLConfig", $Select(tls: "TriageTLS", 1: ""))
+    }
+    If ##class(Ens.Director).IsProductionRunning() Do ##class(Ens.Director).UpdateProduction()
+    Return $$$OK
+}
+
+ClassMethod Env(name As %String, default As %String = "") As %String
+{
+    Set value = $System.Util.GetEnviron(name)
+    Return $Select(value = "": default, 1: value)
+}
+
+/// One system default setting of the production (Interoperability > Configure > System Default Settings).
+ClassMethod Default(item As %String, hostClass As %String, setting As %String, value As %String)
+{
+    Set row = ##class(Ens.Config.DefaultSettings).%OpenId("Triage.Production||"_item_"||"_hostClass_"||"_setting)
+    If '$IsObject(row) {
+        Set row = ##class(Ens.Config.DefaultSettings).%New()
+        Set row.ProductionName = "Triage.Production", row.ItemName = item, row.HostClassName = hostClass, row.SettingName = setting
+    }
+    Set row.SettingValue = value, row.Deployable = 1
+    $$$ThrowOnError(row.%Save())
+}
+
+/// Client TLS configuration for POP3 over TLS, verified against the container's CA bundle.
+ClassMethod EnsureTLS() As %Status
+{
+    New $Namespace
+    Set $Namespace = "%SYS"
+    If ##class(Security.SSLConfigs).Exists("TriageTLS") Return $$$OK
+    Set p("Type") = 0, p("Enabled") = 1, p("VerifyPeer") = 1, p("CAFile") = "/etc/ssl/certs/ca-certificates.crt"
+    Set p("Description") = "Client TLS for the triage mailbox"
+    Return ##class(Security.SSLConfigs).Create("TriageTLS", .p)
 }
 
 }
