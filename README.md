@@ -137,4 +137,4 @@ Model output varies between runs: the stranger's inquiry has also come back as `
 
 ## Author
 
-Oleg Naryzhnykh. MIT license, see [LICENSE](LICENSE).
+Oleg Naryzhnykh ([Developer Community profile](https://community.intersystems.com/user/oleg-naryzhnykh), [GitHub](https://github.com/works-on-my-box)). MIT license, see [LICENSE](LICENSE).
