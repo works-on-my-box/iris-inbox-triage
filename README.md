@@ -1,5 +1,7 @@
 # Inbox triage with an IRIS AI Hub agent
 
+<img src="docs/logo.png" alt="inbox triage" width="120" align="right">
+
 An InterSystems IRIS Interoperability production that reads a mailbox, asks an AI Hub agent what each message needs, and acts on the answer: an alert for urgent mail, a review queue for a person, a draft reply for a quick question, or the archive. Every decision, every tool call the agent made and every draft is a row in IRIS, and every step is a message in the production's trace.
 
 It is modeled on the inbox monitor I run for my own freelance work, where pitches to editors, client threads, hosting notices and newsletters land in one mailbox and the urgent ones must not wait. Built for the InterSystems "AI Agents in Interoperability Workflows" contest on the AI Hub Early Access build.
