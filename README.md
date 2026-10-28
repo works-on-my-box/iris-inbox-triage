@@ -41,10 +41,12 @@ git clone https://github.com/works-on-my-box/iris-inbox-triage.git
 cd iris-inbox-triage
 cp .env.example .env                # put your GEMINI_API_KEY here
 docker compose up -d --build        # IRIS with the production, plus a test mail server (GreenMail)
-scripts/send.sh data/samples/*.eml  # submits the eight samples over SMTP; the production picks them up over POP3
+scripts/demo.sh                     # sends the eight samples over SMTP, waits for the agent, prints the results
 ```
 
-The build installs IPM and loads the module with `zpm "load"`; the production starts with IRIS. A minute or two after `send.sh`, the samples are decided. Where to look, in the Management Portal at http://localhost:52773/csp/sys/UtilHome.csp (user `_SYSTEM`, password `SYS`):
+`scripts/send.sh data/samples/*.eml` only submits the samples; the production picks them up over POP3 within seconds.
+
+The build installs IPM and loads the module with `zpm "load"`; the production starts with IRIS. A minute or two after sending, the samples are decided. Where to look, in the Management Portal at http://localhost:52773/csp/sys/UtilHome.csp (user `_SYSTEM`, password `SYS`):
 
 - **Interoperability → View → Messages**: open any `Triage.Msg.Email` and its trace: the agent's request, its verdict with the reason and statistics, and the operation that acted on it.
 - **Interoperability → Build → Business Processes → Triage.Process.TriageBPL**: the workflow diagram.
