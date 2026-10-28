@@ -1,5 +1,6 @@
 /// Reads emails dropped into the inbox folder as .eml text files and sends each to the triage process.
-/// Only the From, To, Subject, Date and Message-ID headers are used; everything after the first blank line is the body.
+/// Only the From, To, Subject, Date, Message-ID and Content-Type headers are used; everything after the first blank line is the body
+/// (single-part messages only; an HTML body is reduced to text).
 /// The mail server service (Triage.Service.MailInbox) is the main entry; this one works offline and in tests.
 Class Triage.Service.FileInbox Extends Ens.BusinessService
 {
@@ -23,7 +24,7 @@ ClassMethod Parse(stream As %Stream.Object) As Triage.Msg.Email
     Set msg = ##class(Triage.Msg.Email).%New()
     Set msg.Source = "folder"
     Set inHeaders = 1
-    Set body = ""
+    Set (body, contentType) = ""
     Do stream.Rewind()
     While 'stream.AtEnd {
         Set line = $ZStrip(stream.ReadLine(), ">", $Char(13))
@@ -36,10 +37,12 @@ ClassMethod Parse(stream As %Stream.Object) As Triage.Msg.Email
             If name = "subject" Set msg.Subject = value
             If name = "date" Set msg.SentAt = value
             If name = "message-id" Set msg.MessageId = value
+            If name = "content-type" Set contentType = $ZConvert(value, "L")
         } Else {
             Set body = body_line_$Char(10)
         }
     }
+    If contentType [ "text/html" Set body = ##class(Triage.Util.Mail).StripHtml(body)
     Set msg.Body = $Extract(body, 1, 20000)
     Return msg
 }

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="Cache" version="25">
+  <Document name="iris-inbox-triage.ZPM">
+    <Module>
+      <Name>iris-inbox-triage</Name>
+      <Version>0.3.0</Version>
+      <Description>Inbox triage with an IRIS AI Hub agent: an Interoperability production reads a mailbox, an agent decides what each email needs, and the decision is routed to an alert, a review queue, a draft reply or the archive.</Description>
+      <Keywords>ai,agent,ai-hub,interoperability,email,triage</Keywords>
+      <Author>
+        <Person>Oleg Naryzhnykh</Person>
+        <License>MIT</License>
+      </Author>
+      <Packaging>module</Packaging>
+      <SourcesRoot>src</SourcesRoot>
+      <SystemRequirements Version=">=2026.1" />
+      <Resource Name="Triage.PKG" />
+      <UnitTest Name="/tests/" Package="Triage.Test" Phase="test" />
+      <Invoke Class="Triage.Setup" Method="Seed" CheckStatus="true" />
+      <Invoke Class="Triage.Setup" Method="Configure" CheckStatus="true" />
+      <Invoke Class="Ens.Director" Method="SetAutoStart" CheckStatus="true">
+        <Arg>Triage.Production</Arg>
+      </Invoke>
+    </Module>
+  </Document>
+</Export>
