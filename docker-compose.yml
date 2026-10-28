@@ -34,6 +34,7 @@ services:
       - MAIL_HOST
       - MAIL_POP3_PORT
       - MAIL_TLS
-      # Where scripts/send.sh submits the sample emails.
-      - MAIL_SMTP_HOST=${MAIL_SMTP_HOST:-mail}
-      - MAIL_SMTP_PORT=${MAIL_SMTP_PORT:-3025}
+      # SMTP server for outgoing drafts (and for scripts/send.sh); defaults to the test server.
+      - MAIL_SMTP_HOST
+      - MAIL_SMTP_PORT
+      - DRAFTS_TO

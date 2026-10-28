@@ -5,5 +5,7 @@ set sc = $System.OBJ.LoadDir("/opt/triage/src/cls", "ck", .err, 1)
 if 'sc do $System.Status.DisplayError(sc) do $System.Process.Terminate($Job, 1)
 set sc = ##class(Triage.Setup).Seed()
 if 'sc do $System.Status.DisplayError(sc) do $System.Process.Terminate($Job, 1)
+set sc = ##class(Triage.Setup).Configure()
+if 'sc do $System.Status.DisplayError(sc) do $System.Process.Terminate($Job, 1)
 set ^Ens.AutoStart = "Triage.Production"
 halt

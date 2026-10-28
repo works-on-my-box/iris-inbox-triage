@@ -1,4 +1,5 @@
 /// Asks the agent operation for a verdict, records the decision, and routes it to the operations that act on it.
+/// Triage.Process.TriageBPL is the same workflow in BPL; Triage.Inbox.Folder targets this one, Triage.Inbox.Mail the BPL one.
 Class Triage.Process.Triage Extends Ens.BusinessProcess
 {
 
@@ -21,11 +22,10 @@ Method OnRequest(pRequest As Triage.Msg.Email, Output pResponse As Ens.Response)
     Set msg = ##class(Triage.Msg.Decision).FromRow(row, pRequest)
     $$$LOGINFO("Triage: "_row.Category_" / "_row.Urgency_" / "_row.Action_" ("_row.Confidence_", "_row.DecidedBy_")")
 
-    Set alert = (row.Urgency = "hot") || (row.Action = "alert")
-    Set review = (row.Action = "review") || (row.Action = "draft_reply") || (row.Confidence < ..ReviewBelow)
-    If alert $$$ThrowOnError(..SendRequestAsync("Triage.Alert", msg, 0))
-    If review $$$ThrowOnError(..SendRequestAsync("Triage.Review", msg, 0))
+    If (row.Urgency = "hot") || (row.Action = "alert") $$$ThrowOnError(..SendRequestAsync("Triage.Alert", msg, 0))
+    If row.Action = "draft_reply" $$$ThrowOnError(..SendRequestAsync("Triage.Draft", msg, 0))
     If row.Action = "archive" $$$ThrowOnError(..SendRequestAsync("Triage.Archive", msg, 0))
+    If (row.Action = "review") || (row.Confidence < ..ReviewBelow) $$$ThrowOnError(..SendRequestAsync("Triage.Review", msg, 0))
     Quit $$$OK
 }
 

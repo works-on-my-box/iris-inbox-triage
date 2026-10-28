@@ -1,4 +1,4 @@
-/// Inbox triage: mailbox (or inbox folder) -> agent verdict -> alert, review queue or archive.
+/// Inbox triage: mailbox (or inbox folder) -> agent verdict -> alert, review queue, draft reply or archive.
 Class Triage.Production Extends Ens.Production
 {
 
@@ -13,6 +13,7 @@ XData ProductionDefinition
     <Setting Target="Adapter" Name="Credentials">TriageMail</Setting>
     <Setting Target="Adapter" Name="CallInterval">5</Setting>
     <Setting Target="Adapter" Name="DeleteMessage">1</Setting>
+    <Setting Target="Host" Name="TargetConfigName">Triage.ProcessBPL</Setting>
   </Item>
   <Item Name="Triage.Inbox.Folder" Category="" ClassName="Triage.Service.FileInbox" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
     <Setting Target="Adapter" Name="FilePath">/data/inbox/</Setting>
@@ -20,9 +21,20 @@ XData ProductionDefinition
     <Setting Target="Adapter" Name="ArchivePath">/data/processed/</Setting>
     <Setting Target="Adapter" Name="CallInterval">2</Setting>
   </Item>
+  <Item Name="Triage.ProcessBPL" Category="" ClassName="Triage.Process.TriageBPL" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+  </Item>
   <Item Name="Triage.Process" Category="" ClassName="Triage.Process.Triage" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
   </Item>
   <Item Name="Triage.Agent" Category="" ClassName="Triage.Operation.Agent" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+    <Setting Target="Host" Name="RetryInterval">20</Setting>
+    <Setting Target="Host" Name="FailureTimeout">180</Setting>
+  </Item>
+  <Item Name="Triage.Draft" Category="" ClassName="Triage.Operation.Draft" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+    <Setting Target="Adapter" Name="SMTPServer">mail</Setting>
+    <Setting Target="Adapter" Name="SMTPPort">3025</Setting>
+    <Setting Target="Adapter" Name="Credentials">TriageMail</Setting>
+    <Setting Target="Adapter" Name="From">triage@triage.local</Setting>
+    <Setting Target="Host" Name="Owner">owner@triage.local</Setting>
     <Setting Target="Host" Name="RetryInterval">20</Setting>
     <Setting Target="Host" Name="FailureTimeout">180</Setting>
   </Item>

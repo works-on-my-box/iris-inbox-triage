@@ -1,5 +1,6 @@
 /// Tools the triage agent may call. Lookups are read-only SQL; RecordDecision is how the agent answers.
-Class Triage.Agent.Tools Extends %AI.ToolSet [ DependsOn = (Triage.Data.Contact, Triage.Data.Decision) ]
+/// Two policies travel with the toolset: RecordDecision runs once per email, and every call is logged to Triage_Data.ToolCall.
+Class Triage.Agent.Tools Extends %AI.ToolSet [ DependsOn = (Triage.Data.Contact, Triage.Data.Decision, Triage.Policy.Audit, Triage.Policy.OneDecision) ]
 {
 
 Parameter CATEGORIES = "client,editorial,platform,billing,newsletter,spam,personal,other";
@@ -11,6 +12,13 @@ Parameter ACTIONS = "alert,review,draft_reply,archive";
 XData Definition [ MimeType = application/xml ]
 {
 <ToolSet Name="TriageTools">
+  <!-- Policies take no child elements here: on build 2026.3.0AI.154.0 the ToolSet compiler copies a child element of one
+       policy (for example <PreviewChars> under Audit) into the generated code of every policy, and the agent fails with
+       PROPERTY DOES NOT EXIST at start. Defaults live in the policy classes instead. -->
+  <Policies>
+    <Authorization Class="Triage.Policy.OneDecision"/>
+    <Audit Class="Triage.Policy.Audit"/>
+  </Policies>
   <Query Name="LookupContact"
          Description="Find the sender in the known contacts by exact address or by domain. Returns kind (client, editor, platform, vendor, personal) and a note."
          Arguments="address As %String, domain As %String"

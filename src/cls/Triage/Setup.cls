@@ -16,8 +16,8 @@ ClassMethod Seed() As %Status
 }
 
 /// Runs when the container starts (after-start.sh): mailbox credentials from MAIL_USER / MAIL_PASSWORD and,
-/// when MAIL_HOST is set, the server settings of Triage.Inbox.Mail (MAIL_HOST, MAIL_POP3_PORT, MAIL_TLS=1)
-/// as system default settings, so the production definition itself stays untouched.
+/// when MAIL_HOST is set, the server settings of Triage.Inbox.Mail (MAIL_HOST, MAIL_POP3_PORT, MAIL_TLS=1) and of
+/// Triage.Draft (MAIL_SMTP_HOST, MAIL_SMTP_PORT, DRAFTS_TO) as system default settings, so the production definition itself stays untouched.
 ClassMethod Configure() As %Status
 {
     $$$ThrowOnError(##class(Ens.Config.Credentials).SetCredential("TriageMail", ..Env("MAIL_USER", "triage"), ..Env("MAIL_PASSWORD", "triage"), 1))
@@ -28,6 +28,11 @@ ClassMethod Configure() As %Status
         Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "POP3Server", host)
         Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "POP3Port", ..Env("MAIL_POP3_PORT", $Select(tls: 995, 1: 110)))
         Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "SSLConfig", $Select(tls: "TriageTLS", 1: ""))
+        Do ..Default("Triage.Draft", "Triage.Operation.Draft", "SMTPServer", ..Env("MAIL_SMTP_HOST", host))
+        Do ..Default("Triage.Draft", "Triage.Operation.Draft", "SMTPPort", ..Env("MAIL_SMTP_PORT", $Select(tls: 465, 1: 25)))
+        Do ..Default("Triage.Draft", "Triage.Operation.Draft", "SSLConfig", $Select(tls: "TriageTLS", 1: ""))
+        Do ..Default("Triage.Draft", "Triage.Operation.Draft", "From", ..Env("MAIL_USER", "triage"))
+        Do ..Default("Triage.Draft", "Triage.Operation.Draft", "Owner", ..Env("DRAFTS_TO", ..Env("MAIL_USER", "")))
     }
     If ##class(Ens.Director).IsProductionRunning() Do ##class(Ens.Director).UpdateProduction()
     Return $$$OK

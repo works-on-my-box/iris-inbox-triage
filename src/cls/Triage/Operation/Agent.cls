@@ -17,6 +17,8 @@ Parameter SETTINGS = "AgentClass:Agent,MaxBodyChars:Agent";
 Method OnMessage(pRequest As Triage.Msg.Email, Output pResponse As Triage.Msg.Verdict) As %Status
 {
     Kill ^||Triage.Decision
+    // The audit policy tags every tool call with the email it was made for.
+    Set ^||Triage.Email = $ListBuild(pRequest.MessageId, pRequest.Sender)
     Try {
         Set agent = $ClassMethod(..AgentClass, "%New")
         $$$ThrowOnError(agent.%Init())
