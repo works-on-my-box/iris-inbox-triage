@@ -79,7 +79,7 @@ git clone https://github.com/works-on-my-box/iris-inbox-triage.git
 cd iris-inbox-triage
 cp .env.example .env                # put your GEMINI_API_KEY here
 docker compose up -d --build        # IRIS with the production, plus a test mail server (GreenMail)
-scripts/demo.sh                     # sends the eight samples over SMTP, waits for the agent, prints the results
+scripts/demo.sh                     # sends the nine samples over SMTP, waits for the agent, prints the results
 ```
 
 `scripts/send.sh data/samples/*.eml` only submits the samples; the production picks them up over IMAP within seconds.
@@ -162,7 +162,7 @@ module.xml                  IPM module; Dockerfile, iris.script, after-start.sh,
 
 ## Sample run
 
-The nine sample emails and the four known contacts are made up. One run on October 30, 2026, after a clean build, mail read over IMAP, all nine decided by the agent with three tool calls each:
+The nine sample emails and the four known contacts are made up. One run on October 30, 2026, after a clean build, mail read over IMAP, all nine decided by the agent with four tool calls each (`LookupContact`, `SenderHistory`, `search_precedents`, `RecordDecision`):
 
 | Email | Category | Urgency | Action |
 | --- | --- | --- | --- |
@@ -174,7 +174,7 @@ The nine sample emails and the four known contacts are made up. One run on Octob
 | A stranger asks whether I build Telegram bots | client | normal | draft_reply |
 | A known client asks a quick question (HTML-only mail) | client | normal | draft_reply |
 | The hosting provider sends an invoice as a PDF attachment | platform | low | archive |
-| A stranger refers to "our call" and asks for a signed document and bank details | other | normal | review (confidence 0.5) |
+| A stranger refers to "our call" and asks for a signed document and bank details | client | normal | review (confidence 0.5) |
 
 The last one became a task in the Workflow Inbox; completing it there with **Archive** closed the decision as `archived` with `ReviewedBy = _SYSTEM`, and with **Draft** the writer agent drafted a reply. Model output varies between runs, and the instructions in `Triage.Agent.Classifier` name the action for each case to keep it steady. The reason stored with each decision shows what the agent relied on, and `Triage_Data.ToolCall` shows what it looked up. The two drafts were mailed to `owner@triage.local`; the one for the quick question says the schedule has to be checked rather than inventing an answer.
 
@@ -183,7 +183,7 @@ The last one became a task in the Workflow Inbox; completing it there with **Arc
 - A ToolSet with `<Query>` tools does not compile in the same load as the tables it queries unless the ToolSet class declares `DependsOn` on them: the SQL is validated at compile time, and the table exists only after its class is compiled. `Triage.Agent.Tools` has `DependsOn = (Triage.Data.Contact, Triage.Data.Decision, ...)`.
 - Policies declared in the toolset's `<Policies>` block must not carry child elements: the compiler copies a child element of one policy (for example `<PreviewChars>` under `<Audit>`) into the generated code of every policy, and the agent then fails at start with `<PROPERTY DOES NOT EXIST>`. Defaults live in the policy classes instead.
 - `%AI.Policy.Audit.%LogExecution` has to be declared `As %Status`, although the guide shows it without a return type.
-- Free-tier Gemini returns HTTP 429 after about twenty calls in a minute; with three tool calls per email that is a handful of emails. Letting the Business Operation retry (`Retry` plus `RetryInterval` and `FailureTimeout`) handles it without any code in the agent, and the retries are visible in the event log.
+- Free-tier Gemini returns HTTP 429 after about twenty calls in a minute; with four tool calls per email that is a handful of emails. Letting the Business Operation retry (`Retry` plus `RetryInterval` and `FailureTimeout`) handles it without any code in the agent, and the retries are visible in the event log.
 - IRIS has a POP3 adapter but no IMAP one (and no `%Net.IMAP` class), so the IMAP adapter is written in Embedded Python. The raw message, attachments included, is decoded in Python and only the fields cross into ObjectScript: a large message passed as one string would hit the 3.6 MB string limit. IPM installs `python/triage_mail.py` into `mgr/python` with a `FileCopy` resource; that directory is on Embedded Python's `sys.path`.
 - The Workflow Inbox lives in the Analytics User Portal, `_DeepSee.UserPortal.Workflow.zen`; with Analytics disabled for the web application it answers "Invalid action". **Interoperability → Manage → Workflow → Workflow Worklist** lists the tasks but has no buttons to act on them. `Triage.Setup` enables Analytics for `/csp/user`.
 - In this build `%AI.RAG.Embedding.FastEmbed.EmbedBatch()` answers "use the Rust bridge directly", so the bundled embedding model is reachable only through `%AI.RAG.KnowledgeBase` (indexing and its search tool), not from ObjectScript. The knowledge base splits text into chunks of a few hundred characters, so each precedent starts with its decision and keeps the email short: otherwise the chunk a search returns may not say what was decided.
