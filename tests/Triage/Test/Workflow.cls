@@ -17,6 +17,14 @@ Method TestProductionItemsResolve()
     Do $$$AssertTrue(##class(%Dictionary.CompiledClass).%ExistsId("Triage.Process.TriageBPL.Thread1"), "the BPL compiled into a thread class")
 }
 
+Method TestFolderInboxOnlyWithItsDirectory()
+{
+    Do $$$AssertStatusOK(##class(Triage.Setup).Configure(), "configuration applied")
+    Set row = ##class(Ens.Config.DefaultSettings).%OpenId("Triage.Production||Triage.Inbox.Folder||Triage.Service.FileInbox||Enabled")
+    Do $$$AssertTrue($IsObject(row), "Enabled is a system default of the folder service")
+    Do $$$AssertEquals(+row.SettingValue, ##class(%File).DirectoryExists("/data/inbox"), "on where /data/inbox exists, off after an IPM install")
+}
+
 Method TestRecordDecisionRow()
 {
     Set email = ##class(Triage.Msg.Email).%New()

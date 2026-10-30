@@ -110,6 +110,18 @@ scripts/test.sh
 
 Without the mail server, `scripts/drop.sh data/samples/*.eml` feeds the folder service instead.
 
+### With IPM, on an instance you already have
+
+The module is in the community package registry. It needs an IRIS build with AI Hub, such as the image above: the `%AI` classes ship only with those builds. The image has no IPM, so the first line installs it:
+
+```objectscript
+set r=##class(%Net.HttpRequest).%New(),r.Server="pm.community.intersystems.com",r.SSLConfiguration="ISC.FeatureTracker.SSL.Config" do r.Get("/packages/zpm/latest/installer"),$system.OBJ.LoadStream(r.HttpResponse.Data,"c")
+zpm "install iris-inbox-triage"
+do ##class(Ens.Director).StartProduction("Triage.Production")
+```
+
+Set `GEMINI_API_KEY` and the mail variables below in the environment of IRIS before the install; if you set them later, run `do ##class(Triage.Setup).Configure()`. Without `MAIL_HOST` the production looks for a server named `mail`, and the IMAP service logs an error until it finds one. From then on the production starts with IRIS. The folder service stays off here, because `/data/inbox` exists only in the Docker image.
+
 ## Configuration
 
 A real mailbox instead of the test server: set these in `.env` and restart with `docker compose up -d`. Gmail works over IMAP with an app password (`MAIL_HOST=imap.gmail.com`, `MAIL_TLS=1`); triaged messages are marked as read.
@@ -123,7 +135,7 @@ A real mailbox instead of the test server: set these in `.env` and restart with 
 | `MAIL_SMTP_HOST`, `MAIL_SMTP_PORT` | SMTP server for the drafts, same credentials |
 | `DRAFTS_TO` | Mailbox that receives the drafts (default: `MAIL_USER`) |
 
-`Triage.Setup.Configure` runs when the container starts (`after-start.sh`) and applies the values as system default settings of the production, including which inbox service is enabled, so the production definition in the repository stays unchanged. The test server has mailboxes `triage@triage.local` (the one the production reads) and `owner@triage.local`, password = login.
+`Triage.Setup.Configure` runs at install and when the container starts (`after-start.sh`) and applies the values as system default settings of the production, including which inbox service is enabled, so the production definition in the repository stays unchanged. The test server has mailboxes `triage@triage.local` (the one the production reads) and `owner@triage.local`, password = login.
 
 To use another provider, change `PROVIDER`, `MODEL` and `APIKEY` in `Triage.Agent.Classifier` and `Triage.Agent.Writer`; AI Hub also supports OpenAI, Anthropic, Vertex AI, Bedrock, OpenRouter, xAI and OpenAI-compatible local servers.
 

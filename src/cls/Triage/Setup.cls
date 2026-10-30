@@ -42,7 +42,7 @@ ClassMethod EnableInbox() As %Status
 }
 
 /// Runs when the container starts (after-start.sh): mailbox credentials from MAIL_USER / MAIL_PASSWORD, which inbox service
-/// is enabled (MAIL_PROTOCOL: imap, the default, or pop3) and, when MAIL_HOST is set, the server settings of Triage.Inbox.IMAP
+/// is enabled (MAIL_PROTOCOL: imap, the default, or pop3), the folder service only where /data/inbox exists and, when MAIL_HOST is set, the server settings of Triage.Inbox.IMAP
 /// (MAIL_IMAP_PORT), Triage.Inbox.Mail (MAIL_POP3_PORT), MAIL_TLS=1 for both, and of Triage.Draft (MAIL_SMTP_HOST, MAIL_SMTP_PORT,
 /// DRAFTS_TO) — all as system default settings, so the production definition itself stays untouched.
 ClassMethod Configure() As %Status
@@ -52,6 +52,8 @@ ClassMethod Configure() As %Status
     Set pop3 = $ZConvert(..Env("MAIL_PROTOCOL", "imap"), "L") = "pop3"
     Do ..Default("Triage.Inbox.IMAP", "Triage.Service.IMAPInbox", "Enabled", 'pop3)
     Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "Enabled", pop3)
+    // The folder service reads /data/inbox, which only the Docker image creates; after an IPM install it would fail on every start.
+    Do ..Default("Triage.Inbox.Folder", "Triage.Service.FileInbox", "Enabled", ##class(%File).DirectoryExists("/data/inbox"))
     Set host = ..Env("MAIL_HOST", "")
     If host '= "" {
         Set tls = ..Env("MAIL_TLS", "0") = "1"
