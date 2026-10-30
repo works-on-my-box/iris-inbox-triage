@@ -28,10 +28,12 @@ services:
       - "127.0.0.1:1972:1972"
     environment:
       - GEMINI_API_KEY
-      # Mailbox the production reads; defaults match the test server above.
+      # Mailbox the production reads (IMAP, or POP3 with MAIL_PROTOCOL=pop3); defaults match the test server above.
+      - MAIL_PROTOCOL
       - MAIL_USER
       - MAIL_PASSWORD
       - MAIL_HOST
+      - MAIL_IMAP_PORT
       - MAIL_POP3_PORT
       - MAIL_TLS
       # SMTP server for outgoing drafts (and for scripts/send.sh); defaults to the test server.

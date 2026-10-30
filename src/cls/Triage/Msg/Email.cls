@@ -18,7 +18,7 @@ Property MessageId As %String(MAXLEN = 500);
 /// The Date header as received.
 Property SentAt As %String(MAXLEN = 100);
 
-/// mail (POP3 adapter) or folder (.eml files)
+/// imap (IMAP adapter), mail (POP3 adapter) or folder (.eml files)
 Property Source As %String(MAXLEN = 20);
 
 Property Attachments As %Integer [ InitialExpression = 0 ];

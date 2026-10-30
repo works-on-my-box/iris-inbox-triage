@@ -15,16 +15,24 @@ ClassMethod Seed() As %Status
     Return $$$OK
 }
 
-/// Runs when the container starts (after-start.sh): mailbox credentials from MAIL_USER / MAIL_PASSWORD and,
-/// when MAIL_HOST is set, the server settings of Triage.Inbox.Mail (MAIL_HOST, MAIL_POP3_PORT, MAIL_TLS=1) and of
-/// Triage.Draft (MAIL_SMTP_HOST, MAIL_SMTP_PORT, DRAFTS_TO) as system default settings, so the production definition itself stays untouched.
+/// Runs when the container starts (after-start.sh): mailbox credentials from MAIL_USER / MAIL_PASSWORD, which inbox service
+/// is enabled (MAIL_PROTOCOL: imap, the default, or pop3) and, when MAIL_HOST is set, the server settings of Triage.Inbox.IMAP
+/// (MAIL_IMAP_PORT), Triage.Inbox.Mail (MAIL_POP3_PORT), MAIL_TLS=1 for both, and of Triage.Draft (MAIL_SMTP_HOST, MAIL_SMTP_PORT,
+/// DRAFTS_TO) — all as system default settings, so the production definition itself stays untouched.
 ClassMethod Configure() As %Status
 {
     $$$ThrowOnError(##class(Ens.Config.Credentials).SetCredential("TriageMail", ..Env("MAIL_USER", "triage"), ..Env("MAIL_PASSWORD", "triage"), 1))
+    // One service reads the mailbox; both reading it would triage every email twice.
+    Set pop3 = $ZConvert(..Env("MAIL_PROTOCOL", "imap"), "L") = "pop3"
+    Do ..Default("Triage.Inbox.IMAP", "Triage.Service.IMAPInbox", "Enabled", 'pop3)
+    Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "Enabled", pop3)
     Set host = ..Env("MAIL_HOST", "")
     If host '= "" {
         Set tls = ..Env("MAIL_TLS", "0") = "1"
         If tls $$$ThrowOnError(..EnsureTLS())
+        Do ..Default("Triage.Inbox.IMAP", "Triage.Service.IMAPInbox", "IMAPServer", host)
+        Do ..Default("Triage.Inbox.IMAP", "Triage.Service.IMAPInbox", "IMAPPort", ..Env("MAIL_IMAP_PORT", $Select(tls: 993, 1: 143)))
+        Do ..Default("Triage.Inbox.IMAP", "Triage.Service.IMAPInbox", "UseTLS", tls)
         Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "POP3Server", host)
         Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "POP3Port", ..Env("MAIL_POP3_PORT", $Select(tls: 995, 1: 110)))
         Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "SSLConfig", $Select(tls: "TriageTLS", 1: ""))
@@ -56,7 +64,7 @@ ClassMethod Default(item As %String, hostClass As %String, setting As %String, v
     $$$ThrowOnError(row.%Save())
 }
 
-/// Client TLS configuration for POP3 over TLS, verified against the container's CA bundle.
+/// Client TLS configuration for POP3 and SMTP over TLS, verified against the container's CA bundle (the IMAP adapter uses Python's ssl).
 ClassMethod EnsureTLS() As %Status
 {
     New $Namespace

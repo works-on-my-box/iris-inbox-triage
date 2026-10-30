@@ -14,6 +14,7 @@
       <SourcesRoot>src</SourcesRoot>
       <SystemRequirements Version=">=2026.1" />
       <Resource Name="Triage.PKG" />
+      <FileCopy Name="python/" Target="${mgrdir}python/" />
       <UnitTest Name="/tests/" Package="Triage.Test" Phase="test" />
       <Invoke Class="Triage.Setup" Method="Seed" CheckStatus="true" />
       <Invoke Class="Triage.Setup" Method="Configure" CheckStatus="true" />

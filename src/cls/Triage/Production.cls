@@ -1,4 +1,6 @@
 /// Inbox triage: mailbox (or inbox folder) -> agent verdict -> alert, review queue, draft reply or archive.
+/// The mailbox is read over IMAP (Triage.Inbox.IMAP, a custom adapter in Embedded Python); the POP3 service
+/// Triage.Inbox.Mail is the alternative and stays disabled unless MAIL_PROTOCOL=pop3 (Triage.Setup.Configure).
 Class Triage.Production Extends Ens.Production
 {
 
@@ -7,7 +9,14 @@ XData ProductionDefinition
 <Production Name="Triage.Production" TestingEnabled="true" LogGeneralTraceEvents="false">
   <Description>Inbox triage with an IRIS AI Hub agent</Description>
   <ActorPoolSize>2</ActorPoolSize>
-  <Item Name="Triage.Inbox.Mail" Category="" ClassName="Triage.Service.MailInbox" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+  <Item Name="Triage.Inbox.IMAP" Category="" ClassName="Triage.Service.IMAPInbox" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+    <Setting Target="Adapter" Name="IMAPServer">mail</Setting>
+    <Setting Target="Adapter" Name="IMAPPort">3143</Setting>
+    <Setting Target="Adapter" Name="Credentials">TriageMail</Setting>
+    <Setting Target="Adapter" Name="CallInterval">5</Setting>
+    <Setting Target="Host" Name="TargetConfigName">Triage.ProcessBPL</Setting>
+  </Item>
+  <Item Name="Triage.Inbox.Mail" Category="" ClassName="Triage.Service.MailInbox" PoolSize="1" Enabled="false" Foreground="false" LogTraceEvents="false" Schedule="">
     <Setting Target="Adapter" Name="POP3Server">mail</Setting>
     <Setting Target="Adapter" Name="POP3Port">3110</Setting>
     <Setting Target="Adapter" Name="Credentials">TriageMail</Setting>

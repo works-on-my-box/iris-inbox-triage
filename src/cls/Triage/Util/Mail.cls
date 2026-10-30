@@ -21,6 +21,20 @@ ClassMethod FromMailMessage(mail As %Net.MailMessage) As Triage.Msg.Email
     Return msg
 }
 
+/// The triage request from a message decoded in Python (python/triage_mail.py, via Triage.Adapter.IMAPInbound).
+ClassMethod FromParsed(item As %DynamicObject, source As %String = "imap") As Triage.Msg.Email
+{
+    Set msg = ##class(Triage.Msg.Email).%New()
+    Set msg.Source = source
+    Set msg.Sender = item.fromAddr, msg.SenderName = item.fromName, msg.Recipient = item.to
+    Set msg.Subject = item.subject, msg.MessageId = item.messageId, msg.SentAt = item.date
+    Set text = $Translate(item.text, $Char(13), "")
+    If $ZStrip(text, "<>WC") = "" Set text = ..StripHtml($Translate(item.html, $Char(13), ""))
+    Set msg.Body = $Extract(text, 1, 20000)
+    Set msg.Attachments = item.attachments
+    Return msg
+}
+
 /// Finds the first text part and the first HTML part, counts the attachments; recursive for multipart messages.
 ClassMethod Walk(part As %Net.MailMessagePart, ByRef text As %String, ByRef html As %String, ByRef attachments As %Integer)
 {

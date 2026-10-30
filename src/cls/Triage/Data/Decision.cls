@@ -12,7 +12,7 @@ Property Subject As %String(MAXLEN = 500);
 
 Property MessageId As %String(MAXLEN = 500);
 
-/// mail or folder
+/// imap, mail (POP3) or folder
 Property Source As %String(MAXLEN = 20);
 
 Property Category As %String(MAXLEN = 40);

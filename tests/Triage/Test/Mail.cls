@@ -1,6 +1,6 @@
 Include %occInclude
 
-/// Triage.Util.Mail: addresses, display names, HTML to text, %Net.MailMessage to Triage.Msg.Email.
+/// Triage.Util.Mail: addresses, display names, HTML to text, %Net.MailMessage to Triage.Msg.Email; the IMAP adapter's Python parser.
 Class Triage.Test.Mail Extends %UnitTest.TestCase
 {
 
@@ -59,6 +59,44 @@ Method TestFromMailMessageHtmlOnly()
     Set mail.IsHTML = 1
     Do mail.TextData.Write("<p>Hi Oleg,</p><p>Do you build <b>Telegram bots</b>?</p>")
     Set msg = ##class(Triage.Util.Mail).FromMailMessage(mail)
+    Do $$$AssertEquals(msg.Body, "Hi Oleg,"_$Char(10)_"Do you build Telegram bots?", "HTML-only body reduced to text")
+    Do $$$AssertEquals(msg.SenderName, "", "no display name")
+    Do $$$AssertEquals(msg.Attachments, 0, "no attachments")
+}
+
+/// Embedded Python (python/triage_mail.py): encoded-word subject, quoted-printable UTF-8 body, a base64 attachment.
+Method TestParseRawMultipart()
+{
+    Set crlf = $Char(13, 10)
+    Set raw = "From: ""Maria Lopez"" <Maria@ShopCo.example>"_crlf_"To: Triage <triage@triage.local>"_crlf
+    Set raw = raw_"Subject: =?UTF-8?B?0KHRh9GR0YI=?="_crlf_"Message-ID: <q1@shopco.example>"_crlf
+    Set raw = raw_"Date: Wed, 28 Oct 2026 12:00:00 +0000"_crlf_"MIME-Version: 1.0"_crlf
+    Set raw = raw_"Content-Type: multipart/mixed; boundary=""b1"""_crlf_crlf
+    Set raw = raw_"--b1"_crlf_"Content-Type: text/plain; charset=utf-8"_crlf_"Content-Transfer-Encoding: quoted-printable"_crlf_crlf
+    Set raw = raw_"=D0=9F=D1=80=D0=B8=D0=B2=D0=B5=D1=82"_crlf
+    Set raw = raw_"--b1"_crlf_"Content-Type: application/pdf"_crlf_"Content-Disposition: attachment; filename=""invoice.pdf"""_crlf
+    Set raw = raw_"Content-Transfer-Encoding: base64"_crlf_crlf_"JVBERi0xLjQK"_crlf_"--b1--"_crlf
+
+    Set item = {}.%FromJSON(##class(Triage.Adapter.IMAPInbound).ParseRaw(raw))
+    Do $$$AssertEquals(item.fromAddr, "maria@shopco.example", "address lower-cased")
+    Do $$$AssertEquals(item.fromName, "Maria Lopez", "display name without quotes")
+    Do $$$AssertEquals(item.to, "triage@triage.local", "first recipient")
+    Do $$$AssertEquals(item.subject, $ZConvert($Char(208, 161, 209, 135, 209, 145, 209, 130), "I", "UTF8"), "encoded-word subject decoded")
+    Do $$$AssertEquals(item.date, "Wed, 28 Oct 2026 12:00:00 +0000", "date header as received")
+    Do $$$AssertEquals(item.attachments, 1, "the PDF counts as an attachment")
+
+    Set msg = ##class(Triage.Util.Mail).FromParsed(item)
+    Do $$$AssertEquals(msg.Body, $ZConvert($Char(208, 159, 209, 128, 208, 184, 208, 178, 208, 181, 209, 130), "I", "UTF8"), "quoted-printable UTF-8 body decoded")
+    Do $$$AssertEquals(msg.MessageId, "<q1@shopco.example>", "message id")
+    Do $$$AssertEquals(msg.Source, "imap", "source")
+}
+
+Method TestParseRawHtmlOnly()
+{
+    Set crlf = $Char(13, 10)
+    Set raw = "From: tom@newstartup.example"_crlf_"Subject: Bot?"_crlf_"Content-Type: text/html; charset=utf-8"_crlf_crlf
+    Set raw = raw_"<p>Hi Oleg,</p><p>Do you build <b>Telegram bots</b>?</p>"_crlf
+    Set msg = ##class(Triage.Util.Mail).FromParsed({}.%FromJSON(##class(Triage.Adapter.IMAPInbound).ParseRaw(raw)))
     Do $$$AssertEquals(msg.Body, "Hi Oleg,"_$Char(10)_"Do you build Telegram bots?", "HTML-only body reduced to text")
     Do $$$AssertEquals(msg.SenderName, "", "no display name")
     Do $$$AssertEquals(msg.Attachments, 0, "no attachments")
