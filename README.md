@@ -112,10 +112,11 @@ Without the mail server, `scripts/drop.sh data/samples/*.eml` feeds the folder s
 
 ### With IPM, on an instance you already have
 
-The module is in the community package registry. It needs an IRIS build with AI Hub, such as the image above: the `%AI` classes ship only with those builds. The image has no IPM, so the first line installs it:
+The module is in the community package registry. It needs an IRIS build with AI Hub, such as the image above: the `%AI` classes ship only with those builds. The image has no IPM, and a fresh IPM has no registry, so the first two lines set them up:
 
 ```objectscript
 set r=##class(%Net.HttpRequest).%New(),r.Server="pm.community.intersystems.com",r.SSLConfiguration="ISC.FeatureTracker.SSL.Config" do r.Get("/packages/zpm/latest/installer"),$system.OBJ.LoadStream(r.HttpResponse.Data,"c")
+zpm "enable -community"
 zpm "install iris-inbox-triage"
 do ##class(Ens.Director).StartProduction("Triage.Production")
 ```
