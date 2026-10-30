@@ -14,7 +14,7 @@ XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 <property name='Reviewer' type='%String' instantiate='0' />
 <property name='Routed' type='Triage.Msg.Decision' instantiate='0' />
 </context>
-<sequence xend='200' yend='950' >
+<sequence xend='200' yend='1250' >
 <code name='Open for review' xpos='200' ypos='250' >
 <annotation>The decision is marked review while the task is open.</annotation>
 <![CDATA[ Set status = ##class(Triage.Process.ReviewBPL).MarkOpen(request.DecisionId) ]]>
@@ -37,23 +37,33 @@ XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 <annotation>The person's action replaces the agent's for routing; the decision row keeps both.</annotation>
 <![CDATA[ Set context.Routed = ##class(Triage.Process.ReviewBPL).Reviewed(request, context.Choice, context.Reviewer) ]]>
 </code>
-<switch name='Reviewer chose' xpos='200' ypos='650' xend='200' yend='850' >
+<if name='Remember?' condition='$IsObject(context.Routed)' xpos='200' ypos='650' xend='200' yend='850' >
+<annotation>The precedent of this email now carries the person's decision (Triage.Agent re-indexes it).</annotation>
+<true>
+<call name='Remember the decision' target='Triage.Agent' async='1' xpos='335' ypos='750' >
+<request type='Triage.Msg.Decision' >
+<assign property="callrequest" value="context.Routed" action="set" />
+</request>
+</call>
+</true>
+</if>
+<switch name='Reviewer chose' xpos='200' ypos='950' xend='200' yend='1150' >
 <case condition='$IsObject(context.Routed) &amp;&amp; (context.Routed.Action="alert")' >
-<call name='Alert' target='Triage.Alert' async='1' xpos='-70' ypos='750' >
+<call name='Alert' target='Triage.Alert' async='1' xpos='-70' ypos='1050' >
 <request type='Triage.Msg.Decision' >
 <assign property="callrequest" value="context.Routed" action="set" />
 </request>
 </call>
 </case>
 <case condition='$IsObject(context.Routed) &amp;&amp; (context.Routed.Action="draft_reply")' >
-<call name='Draft a reply' target='Triage.Draft' async='1' xpos='200' ypos='750' >
+<call name='Draft a reply' target='Triage.Draft' async='1' xpos='200' ypos='1050' >
 <request type='Triage.Msg.Decision' >
 <assign property="callrequest" value="context.Routed" action="set" />
 </request>
 </call>
 </case>
 <case condition='$IsObject(context.Routed) &amp;&amp; (context.Routed.Action="archive")' >
-<call name='Archive' target='Triage.Archive' async='1' xpos='470' ypos='750' >
+<call name='Archive' target='Triage.Archive' async='1' xpos='470' ypos='1050' >
 <request type='Triage.Msg.Decision' >
 <assign property="callrequest" value="context.Routed" action="set" />
 </request>
@@ -113,7 +123,7 @@ ClassMethod Reviewed(d As Triage.Msg.Decision, choice As %String, user As %Strin
         $$$ThrowOnError(row.%Save())
     }
     Set routed = d.%ConstructClone()
-    Set routed.Action = action
+    Set routed.Action = action, routed.ReviewedBy = user
     Return routed
 }
 

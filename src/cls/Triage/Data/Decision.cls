@@ -28,6 +28,11 @@ Property Confidence As %Numeric(SCALE = 2);
 /// agent, or fallback when the agent could not decide
 Property DecidedBy As %String(MAXLEN = 20);
 
+/// Model and prompt version that produced the agent's decision (from the verdict).
+Property Model As %String(MAXLEN = 100);
+
+Property PromptVersion As %String(MAXLEN = 8);
+
 Property DecidedAt As %TimeStamp [ InitialExpression = {$ZDateTime($Horolog, 3)} ];
 
 /// open until an operation or a person closes it
@@ -53,7 +58,7 @@ ClassMethod Record(email As Triage.Msg.Email, verdict As Triage.Msg.Verdict) As 
     Set row.Subject = email.Subject
     Set row.MessageId = email.MessageId
     Set row.Source = email.Source
-    For prop = "Category", "Urgency", "Action", "Reason", "Confidence", "DecidedBy" {
+    For prop = "Category", "Urgency", "Action", "Reason", "Confidence", "DecidedBy", "Model", "PromptVersion" {
         Set $Property(row, prop) = $Property(verdict, prop)
     }
     $$$ThrowOnError(row.%Save())

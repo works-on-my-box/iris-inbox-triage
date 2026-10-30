@@ -45,6 +45,14 @@ Method TestFallbackVerdict()
     Do $$$AssertEquals(v.DecidedBy, "fallback", "marked as fallback")
 }
 
+Method TestPromptVersion()
+{
+    Set v = ##class(Triage.Operation.Agent).PromptVersion("Triage.Agent.Classifier")
+    Do $$$AssertTrue(v ? 1.8AN, "the classifier's instructions have a CRC-32 version: "_v)
+    Do $$$AssertEquals(##class(Triage.Operation.Agent).PromptVersion("Triage.Agent.Classifier"), v, "stable while the prompt is unchanged")
+    Do $$$AssertEquals(##class(Triage.Operation.Agent).PromptVersion("No.Such.Agent"), "", "no instructions, no version")
+}
+
 Method TestTransientErrors()
 {
     Do $$$AssertEquals(##class(Triage.Operation.Agent).Transient("Provider 'gemini' error: Rate limit exceeded (HTTP 429)"), 1, "rate limit is retried")

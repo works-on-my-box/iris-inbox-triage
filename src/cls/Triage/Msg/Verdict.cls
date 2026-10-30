@@ -23,6 +23,12 @@ Property CompletionTokens As %Integer;
 
 Property LlmMs As %Integer;
 
+/// Model that decided, from the agent class.
+Property Model As %String(MAXLEN = 100);
+
+/// CRC-32 of the agent's instructions: which version of the prompt produced this verdict.
+Property PromptVersion As %String(MAXLEN = 8);
+
 /// The verdict used when the agent could not decide: a person looks at the email.
 ClassMethod Fallback(reason As %String) As Triage.Msg.Verdict
 {

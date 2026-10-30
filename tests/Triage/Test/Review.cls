@@ -38,8 +38,17 @@ Method TestReviewedRecordsTheChoice()
     Do $$$AssertEquals(row.ReviewAction, "draft_reply", "reviewer's action recorded")
     Do $$$AssertEquals(row.Action, "review", "agent's action kept on the row")
     Do $$$AssertEquals(row.Status, "reviewed", "status")
+    Do $$$AssertEquals(routed.ReviewedBy, "_SYSTEM", "the routed copy names the reviewer, for the precedent")
     Do $$$AssertEquals(##class(Triage.Process.ReviewBPL).Reviewed(d, "", "_SYSTEM"), "", "no choice: nothing routed")
     Do ##class(Triage.Data.Decision).%DeleteId(row.%Id())
+}
+
+Method TestPrecedentText()
+{
+    Set text = ##class(Triage.Agent.Precedents).Text("JPark@NorthBay.example", "Re: our call", "Please send your bank details.", "archive", "a person in review")
+    Do $$$AssertEquals(text, "Decided by a person in review: archive. Earlier email from NorthBay.example, subject: Re: our call. Please send your bank details.", "the decision first, then who and what")
+    Do $$$AssertEquals(##class(Triage.Agent.Precedents).Source("<a@b>", "x@y", "s"), "<a@b>", "Message-ID is the key")
+    Do $$$AssertEquals(##class(Triage.Agent.Precedents).Source("", "X@Y", "s"), "no-id:x@y:s", "sender and subject without one")
 }
 
 Method TestReviewerRole()

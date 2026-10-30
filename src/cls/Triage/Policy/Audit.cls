@@ -10,8 +10,14 @@ Parameter XMLNAME = "Audit";
 /// Characters of the tool result kept in the log.
 Property PreviewChars As %Integer(XMLPROJECTION = "ELEMENT") [ InitialExpression = 300 ];
 
+/// Log only tools whose names start with this prefix. Empty for the toolset's copy, which sees only its own tools;
+/// Triage.Operation.Agent sets "search_" on the copy it attaches to the agent's tool manager for the knowledge-base
+/// tool, which the toolset's policies do not cover (without the prefix the toolset's tools would be logged twice).
+Property ToolPrefix As %String(XMLPROJECTION = "NONE");
+
 Method %LogExecution(call As %DynamicObject, metadata As %DynamicObject, result As %DynamicObject, duration As %Integer, status As %Status) As %Status
 {
+    If (..ToolPrefix '= "") && ($Extract(call.name, 1, $Length(..ToolPrefix)) '= ..ToolPrefix) Return $$$OK
     Try {
         Set row = ##class(Triage.Data.ToolCall).%New()
         Set row.ToolName = call.name

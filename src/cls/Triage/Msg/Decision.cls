@@ -24,6 +24,9 @@ Property Reason As %String(MAXLEN = 1000);
 
 Property Confidence As %Numeric(SCALE = 2);
 
+/// Set on the copy that Triage.Review routes after a person decided.
+Property ReviewedBy As %String(MAXLEN = 128);
+
 ClassMethod FromRow(row As Triage.Data.Decision, email As Triage.Msg.Email) As Triage.Msg.Decision
 {
     Set msg = ..%New()
