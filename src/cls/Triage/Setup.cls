@@ -15,6 +15,32 @@ ClassMethod Seed() As %Status
     Return $$$OK
 }
 
+/// The Workflow role that receives review tasks (Triage.Process.ReviewBPL), with _SYSTEM, the portal login of the demo,
+/// as its member: its tasks appear in that user's Workflow Inbox, which EnableInbox makes reachable.
+ClassMethod Reviewers() As %Status
+{
+    Set role = "Triage Reviewers", user = "_SYSTEM"
+    If '##class(EnsLib.Workflow.UserDefinition).%ExistsId(user) $$$ThrowOnError(##class(EnsLib.Workflow.UserDefinition).CreateUser(user, "Triage reviewer"))
+    If '##class(EnsLib.Workflow.RoleDefinition).%ExistsId(role) $$$ThrowOnError(##class(EnsLib.Workflow.RoleDefinition).CreateRole(role))
+    Set rs = ##class(%SQL.Statement).%ExecDirect(, "SELECT COUNT(*) AS N FROM EnsLib_Workflow.RoleMembership WHERE RoleName = ? AND UserName = ?", role, user)
+    If rs.%Next() && (rs.N = 0) $$$ThrowOnError(##class(EnsLib.Workflow.RoleDefinition).AddUserToRole(role, user))
+    Return ..EnableInbox()
+}
+
+/// The Workflow Inbox is a page of the Analytics User Portal (/csp/user/_DeepSee.UserPortal.Workflow.zen), which answers
+/// "Invalid action" until Analytics is enabled for the namespace's web application.
+ClassMethod EnableInbox() As %Status
+{
+    Set app = $System.CSP.GetDefaultApp($Namespace)
+    New $Namespace
+    Set $Namespace = "%SYS"
+    $$$ThrowOnError(##class(Security.Applications).Get(app, .props))
+    If props("DeepSeeEnabled") Return $$$OK
+    Kill props
+    Set props("DeepSeeEnabled") = 1
+    Return ##class(Security.Applications).Modify(app, .props)
+}
+
 /// Runs when the container starts (after-start.sh): mailbox credentials from MAIL_USER / MAIL_PASSWORD, which inbox service
 /// is enabled (MAIL_PROTOCOL: imap, the default, or pop3) and, when MAIL_HOST is set, the server settings of Triage.Inbox.IMAP
 /// (MAIL_IMAP_PORT), Triage.Inbox.Mail (MAIL_POP3_PORT), MAIL_TLS=1 for both, and of Triage.Draft (MAIL_SMTP_HOST, MAIL_SMTP_PORT,

@@ -33,6 +33,14 @@ Property DecidedAt As %TimeStamp [ InitialExpression = {$ZDateTime($Horolog, 3)}
 /// open until an operation or a person closes it
 Property Status As %String(MAXLEN = 20) [ InitialExpression = "open" ];
 
+/// Workflow user who completed the review task (Triage.Process.ReviewBPL); empty when no person was asked.
+Property ReviewedBy As %String(MAXLEN = 128);
+
+/// The reviewer's action (alert, draft_reply, archive); Action keeps the agent's.
+Property ReviewAction As %String(MAXLEN = 40);
+
+Property ReviewedAt As %TimeStamp;
+
 Index SenderIdx On Sender;
 
 Index DomainIdx On SenderDomain;

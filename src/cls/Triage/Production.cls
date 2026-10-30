@@ -1,4 +1,4 @@
-/// Inbox triage: mailbox (or inbox folder) -> agent verdict -> alert, review queue, draft reply or archive.
+/// Inbox triage: mailbox (or inbox folder) -> agent verdict -> alert, review by a person (Workflow), draft reply or archive.
 /// The mailbox is read over IMAP (Triage.Inbox.IMAP, a custom adapter in Embedded Python); the POP3 service
 /// Triage.Inbox.Mail is the alternative and stays disabled unless MAIL_PROTOCOL=pop3 (Triage.Setup.Configure).
 Class Triage.Production Extends Ens.Production
@@ -49,7 +49,10 @@ XData ProductionDefinition
   </Item>
   <Item Name="Triage.Alert" Category="" ClassName="Triage.Operation.Alert" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
   </Item>
-  <Item Name="Triage.Review" Category="" ClassName="Triage.Operation.Review" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+  <Item Name="Triage.Review" Category="" ClassName="Triage.Process.ReviewBPL" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="Triage Reviewers" Category="" ClassName="EnsLib.Workflow.Operation" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+    <Setting Target="Host" Name="AutoCreateRole">1</Setting>
   </Item>
   <Item Name="Triage.Archive" Category="" ClassName="Triage.Operation.Archive" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
   </Item>

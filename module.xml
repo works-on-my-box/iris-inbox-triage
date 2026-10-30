@@ -17,6 +17,7 @@
       <FileCopy Name="python/" Target="${mgrdir}python/" />
       <UnitTest Name="/tests/" Package="Triage.Test" Phase="test" />
       <Invoke Class="Triage.Setup" Method="Seed" CheckStatus="true" />
+      <Invoke Class="Triage.Setup" Method="Reviewers" CheckStatus="true" />
       <Invoke Class="Triage.Setup" Method="Configure" CheckStatus="true" />
       <Invoke Class="Ens.Director" Method="SetAutoStart" CheckStatus="true">
         <Arg>Triage.Production</Arg>
