@@ -71,10 +71,10 @@ What it does not do: there is no prompt playground or prompt editor, cost is in 
 
 ## Run it
 
-Requirements: Docker, the IRIS Community image with AI Hub from the [Early Access Program portal](https://evaluation.intersystems.com/Eval/early-access/AIHub) (file `iris-community-2026.3.0AI.154.0-docker.tar.gz`), and a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey); the free tier is enough.
+Requirements: Docker, the IRIS Community image with AI Hub from the [Early Access Program portal](https://evaluation.intersystems.com/Eval/early-access/AIHub) (file `iris-community-2027.1.0AI.109.0-docker.tar.gz`), and a Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey); the free tier is enough.
 
 ```sh
-docker load -i iris-community-2026.3.0AI.154.0-docker.tar.gz
+docker load -i iris-community-2027.1.0AI.109.0-docker.tar.gz
 git clone https://github.com/works-on-my-box/iris-inbox-triage.git
 cd iris-inbox-triage
 cp .env.example .env                # put your GEMINI_API_KEY here
@@ -191,7 +191,9 @@ The nine sample emails and the four known contacts are made up. One run on Octob
 
 The last one became a task in the Workflow Inbox; completing it there with **Archive** closed the decision as `archived` with `ReviewedBy = _SYSTEM`, and with **Draft** the writer agent drafted a reply. Model output varies between runs, and the instructions in `Triage.Agent.Classifier` name the action for each case to keep it steady. The reason stored with each decision shows what the agent relied on, and `Triage_Data.ToolCall` shows what it looked up. The two drafts were mailed to `owner@triage.local`; the one for the quick question says the schedule has to be checked rather than inventing an answer.
 
-## Notes from building it on the Early Access build (2026.3.0AI.154.0)
+## Notes from building it on the Early Access builds
+
+Built on 2026.3.0AI.154.0 and re-tested on 2027.1.0AI.109.0, where it runs without code changes. The compile order, the `<Policies>` and the FastEmbed items below still reproduce on 2027.1.0AI.109.0.
 
 - A ToolSet with `<Query>` tools does not compile in the same load as the tables it queries unless the ToolSet class declares `DependsOn` on them: the SQL is validated at compile time, and the table exists only after its class is compiled. `Triage.Agent.Tools` has `DependsOn = (Triage.Data.Contact, Triage.Data.Decision, ...)`.
 - Policies declared in the toolset's `<Policies>` block must not carry child elements: the compiler copies a child element of one policy (for example `<PreviewChars>` under `<Audit>`) into the generated code of every policy, and the agent then fails at start with `<PROPERTY DOES NOT EXIST>`. Defaults live in the policy classes instead.

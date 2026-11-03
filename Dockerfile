@@ -1,6 +1,6 @@
 # The base image is the IRIS Community build with AI Hub from the Early Access Program portal
 # (https://evaluation.intersystems.com/Eval/early-access/AIHub); load it with `docker load` first.
-ARG IRIS_IMAGE=docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2026.3.0AI.154.0
+ARG IRIS_IMAGE=docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2027.1.0AI.109.0
 FROM ${IRIS_IMAGE}
 
 USER root

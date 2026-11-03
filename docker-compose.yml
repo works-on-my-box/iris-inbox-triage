@@ -16,7 +16,7 @@ services:
     build:
       context: .
       args:
-        IRIS_IMAGE: ${IRIS_IMAGE:-docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2026.3.0AI.154.0}
+        IRIS_IMAGE: ${IRIS_IMAGE:-docker.iscinternal.com/docker-intersystems/intersystems/iris-community:2027.1.0AI.109.0}
     container_name: iris-inbox-triage
     restart: unless-stopped
     depends_on:

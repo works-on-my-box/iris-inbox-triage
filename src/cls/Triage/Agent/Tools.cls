@@ -12,9 +12,9 @@ Parameter ACTIONS = "alert,review,draft_reply,archive";
 XData Definition [ MimeType = application/xml ]
 {
 <ToolSet Name="TriageTools">
-  <!-- Policies take no child elements here: on build 2026.3.0AI.154.0 the ToolSet compiler copies a child element of one
-       policy (for example <PreviewChars> under Audit) into the generated code of every policy, and the agent fails with
-       PROPERTY DOES NOT EXIST at start. Defaults live in the policy classes instead. -->
+  <!-- Policies take no child elements here: on builds 2026.3.0AI.154.0 and 2027.1.0AI.109.0 the ToolSet compiler copies
+       a child element of one policy (for example <PreviewChars> under Audit) into the generated code of every policy,
+       and the agent fails with PROPERTY DOES NOT EXIST at start. Defaults live in the policy classes instead. -->
   <Policies>
     <Authorization Class="Triage.Policy.OneDecision"/>
     <Audit Class="Triage.Policy.Audit"/>
