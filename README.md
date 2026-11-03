@@ -6,6 +6,8 @@ An InterSystems IRIS Interoperability production that reads a mailbox, asks an A
 
 It is modeled on the inbox monitor I run for my own freelance work, where pitches to editors, client threads, hosting notices and newsletters land in one mailbox and the urgent ones must not wait. Built for the InterSystems "AI Agents in Interoperability Workflows" contest on the AI Hub Early Access build.
 
+Video demo (1:38, no sound, captions): https://youtu.be/ht88cOoM4Ng
+
 ## How it works
 
 ```
