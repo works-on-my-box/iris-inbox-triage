@@ -15,7 +15,7 @@ Method OnProcessInput(pInput As %Net.MailMessage, Output pOutput As %RegisteredO
     Try {
         Set msg = ##class(Triage.Util.Mail).FromMailMessage(pInput)
     } Catch ex {
-        // A message the parser cannot read still reaches a person instead of staying on the server as an error.
+        // A message the parser cannot read still goes to triage with its sender and subject, instead of staying on the server as an error.
         $$$LOGWARNING("Could not parse mail from "_pInput.From_": "_ex.DisplayString())
         Set msg = ##class(Triage.Msg.Email).%New()
         Set msg.Source = "mail", msg.Sender = ##class(Triage.Util.Mail).Address(pInput.From), msg.Subject = pInput.Subject
