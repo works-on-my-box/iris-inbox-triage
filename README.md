@@ -10,6 +10,8 @@ Video demo (1:38, captions, no voice-over): https://youtu.be/ht88cOoM4Ng
 
 Article on the Developer Community: https://community.intersystems.com/post/inbox-triage-iris-ai-hub-agent-how-it-works-and-how-run-it
 
+Online demo: http://14.225.224.76:8091/ (send a sample or your own email to the test mailbox and see what the agent decided)
+
 ## How it works
 
 ```
