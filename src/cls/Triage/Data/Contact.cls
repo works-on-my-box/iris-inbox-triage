@@ -16,6 +16,15 @@ Index AddressIdx On Address;
 
 Index MailDomainIdx On MailDomain;
 
+/// Mail providers whose domain is shared by unrelated people: a contact there is known by its address only.
+Parameter SHAREDDOMAINS = "gmail.com,googlemail.com,outlook.com,hotmail.com,live.com,msn.com,yahoo.com,ymail.com,icloud.com,me.com,mac.com,aol.com,proton.me,protonmail.com,gmx.com,gmx.net,gmx.de,mail.com,zoho.com,yandex.ru,yandex.com,mail.ru,qq.com,163.com";
+
+/// 1 for the domain of a shared mail provider (gmail.com and the like), where the domain says nothing about the sender.
+ClassMethod Shared(domain As %String) As %Boolean [ SqlProc ]
+{
+    Return $ListFind($ListFromString(..#SHAREDDOMAINS), $ZConvert(domain, "L")) > 0
+}
+
 ClassMethod Add(address As %String, kind As %String, note As %String = "") As %Status
 {
     Set c = ..%New()

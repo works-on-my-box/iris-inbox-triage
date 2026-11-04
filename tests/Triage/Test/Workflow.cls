@@ -81,4 +81,32 @@ Method TestPromptShowsWhatTheAgentNeeds()
     Do $$$AssertEquals($Extract(##class(Triage.Operation.Agent).Prompt(email, 5), *-4, *), "Do yo", "body cut to the limit")
 }
 
+/// A BPL switch runs only its first true case, so review for a low confidence is a step of its own after the switch:
+/// an archive or a draft decided below ReviewBelow also reaches a person, as in Triage.Process.Triage.
+Method TestBPLReviewsLowConfidence()
+{
+    Set bpl = ##class(%Dictionary.CompiledXData).%OpenId("Triage.Process.TriageBPL||BPL").Data.Read(1000000)
+    Set switch = $Piece($Piece(bpl, "<switch", 2), "</switch>", 1)
+    Do $$$AssertTrue(switch '[ "Triage.Review", "the review call is not a case of the action switch")
+    Set after = $Piece(bpl, "</switch>", 2)
+    Do $$$AssertTrue((after [ "process.ReviewBelow") && (after [ "target='Triage.Review'"), "after the switch, a decision below ReviewBelow goes to review whatever its action")
+}
+
+/// Seed runs on every install and upgrade: it adds the sample contacts that are missing and keeps the owner's own.
+Method TestSeedKeepsContacts()
+{
+    Set own = "own"_$Job_"@unit-test.example"
+    Do $$$AssertStatusOK(##class(Triage.Data.Contact).Add(own, "client", "unit test"), "a contact of the owner's own")
+    Do $$$AssertStatusOK(##class(Triage.Setup).Seed(), "seeded again, as an upgrade does")
+    Do $$$AssertEquals(..Contacts(own), 1, "the owner's contact is kept")
+    Do $$$AssertEquals(..Contacts("editor@devpress.example"), 1, "a sample contact is there once")
+    Do ##class(%SQL.Statement).%ExecDirect(, "DELETE FROM Triage_Data.Contact WHERE Address = ?", own)
+}
+
+ClassMethod Contacts(address As %String) As %Integer
+{
+    Set rs = ##class(%SQL.Statement).%ExecDirect(, "SELECT COUNT(*) AS N FROM Triage_Data.Contact WHERE Address = ?", address)
+    Return $Select(rs.%Next(): rs.N, 1: 0)
+}
+
 }

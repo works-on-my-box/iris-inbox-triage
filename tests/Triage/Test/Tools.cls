@@ -1,6 +1,6 @@
 Include %occInclude
 
-/// Triage.Agent.Tools.RecordDecision: validation and the hand-over to the operation.
+/// Triage.Agent.Tools: RecordDecision (validation and the hand-over to the operation) and LookupContact, run as the agent runs it.
 Class Triage.Test.Tools Extends %UnitTest.TestCase
 {
 
@@ -36,6 +36,22 @@ Method TestClampsConfidenceAndTrimsReason()
     Do $$$AssertEquals($Length($ListGet(^||Triage.Decision, 4)), 1000, "reason cut to 1000 characters")
     Do ##class(Triage.Agent.Tools).RecordDecision("spam", "low", "archive", "x", -0.2)
     Do $$$AssertEquals($ListGet(^||Triage.Decision, 5), 0, "confidence floored at 0")
+}
+
+/// A contact at a shared mail provider is known by its address only: another gmail.com sender is not a known contact.
+Method TestLookupContactByDomain()
+{
+    Set tools = ##class(Triage.Agent.Tools).%New()
+    Set friend = "friend"_$Job_"@gmail.com", boss = "boss"_$Job_"@acme-unit-test.example"
+    Do $$$AssertStatusOK(##class(Triage.Data.Contact).Add(friend, "personal", "unit test"), "a contact at gmail.com")
+    Do $$$AssertStatusOK(##class(Triage.Data.Contact).Add(boss, "client", "unit test"), "a contact at a company domain")
+    Set r = tools.%Invoke("LookupContact", {"address": "stranger@gmail.com", "domain": "gmail.com"})
+    Do $$$AssertEquals(r.%Get("row_count"), 0, "another gmail.com sender is not a known contact")
+    Set r = tools.%Invoke("LookupContact", {"address": (friend), "domain": "gmail.com"})
+    Do $$$AssertEquals(r.%Get("row_count"), 1, "the contact at gmail.com is found by its address")
+    Set r = tools.%Invoke("LookupContact", {"address": "someone@acme-unit-test.example", "domain": "acme-unit-test.example"})
+    Do $$$AssertEquals(r.%Get("row_count"), 1, "a company domain still matches")
+    Do ##class(%SQL.Statement).%ExecDirect(, "DELETE FROM Triage_Data.Contact WHERE Address IN (?, ?)", friend, boss)
 }
 
 }

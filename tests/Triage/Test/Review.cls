@@ -58,4 +58,18 @@ Method TestReviewerRole()
     Do $$$AssertTrue(rs.%Next() && (rs.N = 1), "_SYSTEM is a member, so the tasks show in its Workflow Inbox")
 }
 
+/// The agent failed or recorded nothing, so the email has no precedent: the person's decision becomes the first one
+/// (ReindexDocument adds the document when its source has none).
+Method TestReviewedAddsMissingPrecedent()
+{
+    Set precedents = ##class(Triage.Agent.Precedents).Open()
+    Set d = ##class(Triage.Msg.Decision).%New()
+    Set d.MessageId = "<no-precedent-"_$Job_"@unit-test.example>", d.Sender = "billing@unit-test.example", d.Subject = "Invoice 1043"
+    Set d.Body = "Your invoice is attached.", d.Category = "billing", d.Urgency = "normal", d.Action = "archive"
+    Do $$$AssertStatusOK(precedents.Reviewed(d, "_SYSTEM"), "reviewed with no precedent of the agent's")
+    Set rs = ##class(%SQL.Statement).%ExecDirect(, "SELECT text FROM Triage_Data.Precedent WHERE source = ?", d.MessageId)
+    Do $$$AssertTrue(rs.%Next() && (rs.text [ "Decided by a person in review: archive."), "the precedent carries the person's decision")
+    Do ##class(%SQL.Statement).%ExecDirect(, "DELETE FROM Triage_Data.Precedent WHERE source = ?", d.MessageId)
+}
+
 }

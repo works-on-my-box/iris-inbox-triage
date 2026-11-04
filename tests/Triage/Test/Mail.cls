@@ -114,4 +114,53 @@ Method TestFolderParse()
     Do $$$AssertEquals(msg.Source, "folder", "source")
 }
 
+/// One IMAP poll of large non-Latin HTML messages: the batch fits in one IRIS string (escaped as JSON, ten such messages
+/// would take 6 MB), and with a smaller budget the poll stops early and the next one reads the rest.
+/// Needs the test mail server of docker-compose.yml (host mail); skipped without it.
+Method TestFetchStaysUnderStringLimit()
+{
+    Set box = "big"_$Job_"@triage.local"
+    If '..SendLarge(box, 10) {
+        Do $$$AssertSkipped("no test mail server at mail:3025")
+        Quit
+    }
+    Set all = {}.%FromJSON(##class(Triage.Adapter.IMAPInbound).Fetch("mail", 3143, 0, box, box, "INBOX", 10))
+    Do $$$AssertEquals(all.messages.%Size(), 10, "all ten in one poll, under the string limit")
+    Set first = {}.%FromJSON(##class(Triage.Adapter.IMAPInbound).Fetch("mail", 3143, 0, box, box, "INBOX", 10, 500000))
+    Set n = first.messages.%Size()
+    Do $$$AssertTrue((n >= 1) && (n < 10), "with a 500,000-character budget the poll stops early: "_n_" of 10")
+    Do ##class(Triage.Adapter.IMAPInbound).Finish("mail", 3143, 0, box, box, "INBOX", ..Uids(first), 0)
+    Set rest = {}.%FromJSON(##class(Triage.Adapter.IMAPInbound).Fetch("mail", 3143, 0, box, box, "INBOX", 10))
+    Do $$$AssertEquals(rest.messages.%Size(), 10 - n, "the next poll reads the rest")
+    Do ##class(Triage.Adapter.IMAPInbound).Finish("mail", 3143, 0, box, box, "INBOX", ..Uids(all), 1)
+}
+
+ClassMethod Uids(batch As %DynamicObject) As %String
+{
+    Set uids = [], iter = batch.messages.%GetIterator()
+    While iter.%GetNext(, .item) { Do uids.%Push(item.uid) }
+    Return uids.%ToJSON()
+}
+
+/// Mails count HTML messages of about 100,000 Cyrillic characters each to box; the test server creates the mailbox,
+/// with the address as login and password. 0 when no test mail server answers.
+ClassMethod SendLarge(box As %String, count As %Integer) As %Boolean [ Language = python ]
+{
+    import smtplib
+    from email.message import EmailMessage
+    try:
+        smtp = smtplib.SMTP("mail", 3025, timeout=10)
+    except OSError:
+        return False
+    with smtp:
+        for i in range(count):
+            msg = EmailMessage()
+            msg["From"] = "sender@unit-test.example"
+            msg["To"] = box
+            msg["Subject"] = f"Large message {i + 1}"
+            msg.set_content("<p>" + "\u041f\u0440\u0438\u0432\u0435\u0442, \u043c\u0438\u0440. " * 8000 + "</p>", subtype="html")
+            smtp.send_message(msg)
+    return True
+}
+
 }

@@ -20,13 +20,14 @@ XData Definition [ MimeType = application/xml ]
     <Audit Class="Triage.Policy.Audit"/>
   </Policies>
   <Query Name="LookupContact"
-         Description="Find the sender in the known contacts by exact address or by domain. Returns kind (client, editor, platform, vendor, personal) and a note."
+         Description="Find the sender in the known contacts by exact address, or by domain for a company domain (not for gmail.com and other shared mail providers). Returns kind (client, editor, platform, vendor, personal) and a note."
          Arguments="address As %String, domain As %String"
          MaxRows="5">
     <![CDATA[
       SELECT Address, Kind, Note
       FROM Triage_Data.Contact
-      WHERE Address = LOWER(:address) OR MailDomain = LOWER(:domain)
+      WHERE Address = LOWER(:address)
+         OR (MailDomain = LOWER(:domain) AND Triage_Data.Contact_Shared(MailDomain) = 0)
     ]]>
   </Query>
   <Query Name="SenderHistory"

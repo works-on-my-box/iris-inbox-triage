@@ -55,7 +55,9 @@ Method OnTask() As %Status
 }
 
 /// Unseen messages of the mailbox, decoded: {"uidvalidity": "...", "messages": [{"uid": "...", ...ParseRaw fields}]}.
-ClassMethod Fetch(server As %String, port As %Integer, tls As %Boolean, user As %String, password As %String, mailbox As %String, max As %Integer) As %String [ Language = python ]
+/// The answer is one IRIS string, at most 3,641,144 characters: the batch stops before it would pass budget characters,
+/// and the messages left out stay unseen for the next poll.
+ClassMethod Fetch(server As %String, port As %Integer, tls As %Boolean, user As %String, password As %String, mailbox As %String, max As %Integer, budget As %Integer = 3000000) As %String [ Language = python ]
 {
     import imaplib, json, ssl, triage_mail
     conn = imaplib.IMAP4_SSL(server, port, ssl_context=ssl.create_default_context()) if tls else imaplib.IMAP4(server, port)
@@ -66,7 +68,7 @@ ClassMethod Fetch(server As %String, port As %Integer, tls As %Boolean, user As 
             raise RuntimeError(f"cannot open mailbox {mailbox!r}")
         validity = (conn.response("UIDVALIDITY")[1] or [b""])[0].decode()
         typ, data = conn.uid("search", None, "UNSEEN")
-        messages = []
+        messages, size = [], 0
         for uid in data[0].split()[:max]:
             typ, parts = conn.uid("fetch", uid, "(BODY.PEEK[])")
             raw = next((p[1] for p in parts if isinstance(p, tuple)), None)
@@ -75,8 +77,12 @@ ClassMethod Fetch(server As %String, port As %Integer, tls As %Boolean, user As 
             # Parsed here, in Python: the raw message (attachments included) never becomes an IRIS string.
             item = triage_mail.parse(raw)
             item["uid"] = uid.decode()
+            # Non-ASCII characters are kept as they are: escaped, each would take six characters of the string.
+            size += len(json.dumps(item, ensure_ascii=False)) + 2
+            if messages and size > budget:
+                break
             messages.append(item)
-        return json.dumps({"uidvalidity": validity, "messages": messages})
+        return json.dumps({"uidvalidity": validity, "messages": messages}, ensure_ascii=False)
     finally:
         try:
             conn.logout()

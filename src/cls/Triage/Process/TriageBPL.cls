@@ -15,7 +15,7 @@ XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 <property name='Verdict' type='Triage.Msg.Verdict' instantiate='0' />
 <property name='Decision' type='Triage.Msg.Decision' instantiate='0' />
 </context>
-<sequence xend='200' yend='1300' >
+<sequence xend='200' yend='1550' >
 <scope xpos='200' ypos='250' xend='200' yend='450' >
 <annotation>If the agent operation fails even after its retries, the email still reaches a person: the fault handler records a fallback verdict.</annotation>
 <call name='Ask the agent' target='Triage.Agent' async='0' timeout='300' xpos='200' ypos='250' >
@@ -66,15 +66,18 @@ XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 </request>
 </call>
 </case>
-<case condition='(context.Decision.Action="review") || (context.Decision.Confidence &lt; process.ReviewBelow)' >
-<call name='Review' target='Triage.Review' async='1' xpos='-70' ypos='1050' >
+<default/>
+</switch>
+<if name='Unsure?' condition='(context.Decision.Action="review") || (context.Decision.Confidence &lt; process.ReviewBelow)' xpos='200' ypos='1250' xend='200' yend='1450' >
+<annotation>Outside the switch, which runs only its first true case: an archive or a draft below ReviewBelow also reaches a person.</annotation>
+<true>
+<call name='Review' target='Triage.Review' async='1' xpos='335' ypos='1350' >
 <request type='Triage.Msg.Decision' >
 <assign property="callrequest" value="context.Decision" action="set" />
 </request>
 </call>
-</case>
-<default/>
-</switch>
+</true>
+</if>
 </sequence>
 </process>
 }
