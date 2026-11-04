@@ -55,7 +55,7 @@ ClassMethod RecordDecision(category As %String(DESCRIPTION = "One of: client, ed
     If '..Allowed(urgency, ..#URGENCIES) Return "Not recorded: urgency must be one of "_..#URGENCIES
     If '..Allowed(action, ..#ACTIONS) Return "Not recorded: action must be one of "_..#ACTIONS
     Set confidence = $Select(confidence < 0: 0, confidence > 1: 1, 1: +confidence)
-    // Tools run in the caller's process, so the business process reads the decision back from here.
+    // Tools run in the caller's process, so the agent operation reads the decision back from here.
     Set ^||Triage.Decision = $ListBuild(category, urgency, action, $Extract(reason, 1, 1000), confidence)
     Return "Recorded."
 }

@@ -34,8 +34,8 @@ ClassMethod Source(messageId As %String, sender As %String, subject As %String) 
     Return $Select(messageId '= "": messageId, 1: "no-id:"_$ZConvert(sender, "L")_":"_subject)
 }
 
-/// The indexed text of one email: the decision first, then who wrote and about what. The knowledge base splits long
-/// text into chunks, so the decision leads and the body is cut short: every chunk a search returns starts with it.
+/// The indexed text of one email: the decision first, then who wrote and about what. The knowledge base splits text
+/// into chunks by paragraph, so line breaks become spaces and the body is cut short: the precedent is one chunk, led by the decision.
 ClassMethod Text(sender As %String, subject As %String, body As %String, action As %String, by As %String) As %String
 {
     Return "Decided by "_by_": "_action_". Earlier email from "_$Piece(sender, "@", 2)_", subject: "_subject_". "_$Extract($ZStrip($Translate(body, $Char(10), " "), "=W"), 1, 300)
