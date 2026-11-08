@@ -216,6 +216,26 @@ Built on 2026.3.0AI.154.0 and re-tested on 2027.1.0AI.109.0, where it runs witho
 - The `%Java Server` external language server starts with only the JDBC driver on its classpath, so a PEX class fails at start with `NoClassDefFoundError: com/intersystems/enslib/pex/BusinessOperation` unless the item's `%gatewayExtraClasspaths` also lists `dev/java/lib/1.8/intersystems-pex-1.0.0-shaded.jar` (entries are separated by `|`). `Triage.Setup.Configure` puts the PEX jar and the compiled classes there.
 - `EnsLib.EMail.InboundAdapter` skips a message on later polls once the service returned an error for it. The mail service therefore never returns an error: a message it cannot parse still goes to the process with its sender and subject, and the agent decides it like any other.
 
+## Contest bonuses
+
+Where each technology bonus of the contest is in this app:
+
+| Bonus | Where |
+| --- | --- |
+| Questionnaire | Submitted on October 30, 2026 |
+| PEX (Java) | `Triage.Export`: [`java/triage/ExportOperation.java`](java/triage/ExportOperation.java), hosted as `EnsLib.PEX.BusinessOperation` in [`Production.cls`](src/cls/Triage/Production.cls) (point 9 above) |
+| Workflow Engine | [`Process/ReviewBPL.cls`](src/cls/Triage/Process/ReviewBPL.cls) and the `Triage Reviewers` role (`EnsLib.Workflow.Operation`), point 7 |
+| Custom Adapter | [`Adapter/IMAPInbound.cls`](src/cls/Triage/Adapter/IMAPInbound.cls), an IMAP inbound adapter |
+| Embedded Python | The IMAP adapter and [`python/triage_mail.py`](python/triage_mail.py), point 1 |
+| IRIS Vector Search | [`Agent/Precedents.cls`](src/cls/Triage/Agent/Precedents.cls), an AI Hub knowledge base on `%AI.RAG.VectorStore.IRIS`, point 8 |
+| Bugs in AI Hub | [ai-hub-eap-bugreports #7](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/7) and [#8](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/8) |
+| Docker | [`Dockerfile`](Dockerfile) and [`docker-compose.yml`](docker-compose.yml) |
+| IPM | [`module.xml`](module.xml); `zpm "install iris-inbox-triage"` |
+| Online demo | http://14.225.224.76:8091/ |
+| Community idea | [DPI-I-689](https://ideas.intersystems.com/ideas/DPI-I-689), section [Tracing the agent with Interoperability](#tracing-the-agent-with-interoperability) |
+| Articles | [How it works and how to run it](https://community.intersystems.com/post/inbox-triage-iris-ai-hub-agent-how-it-works-and-how-run-it), [What I ran into on the Early Access builds](https://community.intersystems.com/post/building-iris-ai-hub-agent-early-access-builds-what-i-ran) |
+| Video | https://youtu.be/ht88cOoM4Ng, and as an [MP4 to download](https://github.com/works-on-my-box/iris-inbox-triage/releases/download/media-v1/iris-inbox-triage-demo.mp4) |
+
 ## Author
 
 Oleg Naryzhnykh ([Developer Community profile](https://community.intersystems.com/user/oleg-naryzhnykh), [GitHub](https://github.com/works-on-my-box)). MIT license, see [LICENSE](LICENSE).
