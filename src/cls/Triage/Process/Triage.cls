@@ -26,6 +26,7 @@ Method OnRequest(pRequest As Triage.Msg.Email, Output pResponse As Ens.Response)
     If row.Action = "draft_reply" $$$ThrowOnError(..SendRequestAsync("Triage.Draft", msg, 0))
     If row.Action = "archive" $$$ThrowOnError(..SendRequestAsync("Triage.Archive", msg, 0))
     If (row.Action = "review") || (row.Confidence < ..ReviewBelow) $$$ThrowOnError(..SendRequestAsync("Triage.Review", msg, 0))
+    $$$ThrowOnError(..SendRequestAsync("Triage.Export", msg, 0))
     Quit $$$OK
 }
 

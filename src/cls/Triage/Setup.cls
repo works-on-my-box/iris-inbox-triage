@@ -50,7 +50,8 @@ ClassMethod EnableInbox() As %Status
 }
 
 /// Runs when the container starts (after-start.sh): mailbox credentials from MAIL_USER / MAIL_PASSWORD, which inbox service
-/// is enabled (MAIL_PROTOCOL: imap, the default, or pop3), the folder service only where /data/inbox exists and, when MAIL_HOST is set, the server settings of Triage.Inbox.IMAP
+/// is enabled (MAIL_PROTOCOL: imap, the default, or pop3), the folder service only where /data/inbox exists, the classpath and the file of the
+/// Java operation Triage.Export and, when MAIL_HOST is set, the server settings of Triage.Inbox.IMAP
 /// (MAIL_IMAP_PORT), Triage.Inbox.Mail (MAIL_POP3_PORT), MAIL_TLS=1 for both, and of Triage.Draft (MAIL_SMTP_HOST, MAIL_SMTP_PORT,
 /// DRAFTS_TO) — all as system default settings, so the production definition itself stays untouched.
 ClassMethod Configure() As %Status
@@ -62,6 +63,9 @@ ClassMethod Configure() As %Status
     Do ..Default("Triage.Inbox.Mail", "Triage.Service.MailInbox", "Enabled", pop3)
     // The folder service reads /data/inbox, which only the Docker image creates; after an IPM install it would fail on every start.
     Do ..Default("Triage.Inbox.Folder", "Triage.Service.FileInbox", "Enabled", ##class(%File).DirectoryExists("/data/inbox"))
+    // The %Java Server classpath holds only the JDBC driver, so the PEX library goes on the item's own classpath, next to its classes.
+    Do ..Default("Triage.Export", "EnsLib.PEX.BusinessOperation", "%gatewayExtraClasspaths", ..Jar("intersystems-pex-")_"|"_..DataDir()_"classes")
+    Do ..Default("Triage.Export", "EnsLib.PEX.BusinessOperation", "%remoteSettings", "Path="_..DataDir()_"decisions.jsonl")
     Set host = ..Env("MAIL_HOST", "")
     If host '= "" {
         Set tls = ..Env("MAIL_TLS", "0") = "1"
@@ -80,6 +84,41 @@ ClassMethod Configure() As %Status
     }
     If ##class(Ens.Director).IsProductionRunning() Do ##class(Ens.Director).UpdateProduction()
     Return $$$OK
+}
+
+/// Compiles the Java operation of Triage.Export, which IPM copies to mgr/iris-inbox-triage/java, into mgr/iris-inbox-triage/classes
+/// with the JDK of the image (the AI Hub images ship Temurin 11). Runs at install, before Configure.
+ClassMethod BuildJava() As %Status
+{
+    Set dir = ..DataDir(), classes = dir_"classes", log = dir_"javac.log"
+    If '##class(%File).CreateDirectoryChain(classes) Return $$$ERROR($$$GeneralError, "Cannot create "_classes)
+    Set args = 7, args(1) = "--release", args(2) = "11", args(3) = "-cp", args(4) = ..Jar("intersystems-pex-")_":"_..Jar("intersystems-jdbc-")
+    Set args(5) = "-d", args(6) = classes, args(7) = dir_"java/triage/ExportOperation.java"
+    Try {
+        Set rc = $ZF(-100, "/STDERR="""_log_"""", "javac", args...)
+    } Catch e {
+        // $ZF(-100) raises <NOTOPEN> when the program is not found
+        If e.Name '= "<NOTOPEN>" Throw e
+        Write !, "javac was not found: the Java operation Triage.Export is not built and will not start; the rest of the production works without it.", !
+        Return $$$OK
+    }
+    If rc = 0 Return $$$OK
+    Set stream = ##class(%Stream.FileCharacter).%New()
+    $$$ThrowOnError(stream.LinkToFile(log))
+    Return $$$ERROR($$$GeneralError, "javac exited with "_rc_": "_stream.Read(2000))
+}
+
+/// mgr/iris-inbox-triage/: the Java source, its classes and the JSON Lines file that Triage.Export appends to.
+ClassMethod DataDir() As %String
+{
+    Return ##class(%File).NormalizeDirectory("iris-inbox-triage", $System.Util.ManagerDirectory())
+}
+
+/// A jar that ships with IRIS, by the start of its name (the version in the name differs between builds).
+ClassMethod Jar(prefix As %String) As %String
+{
+    Set rs = ##class(%File).FileSetFunc(##class(%File).NormalizeDirectory("dev/java/lib/1.8", $System.Util.InstallDirectory()), prefix_"*.jar")
+    Return $Select(rs.%Next(): rs.Name, 1: "")
 }
 
 ClassMethod Env(name As %String, default As %String = "") As %String

@@ -2,7 +2,7 @@
 
 <img src="docs/logo.png" alt="inbox triage" width="120" align="right">
 
-An InterSystems IRIS Interoperability production that reads a mailbox, asks an AI Hub agent what each message needs, and acts on the answer: an alert for urgent mail, a draft reply for a quick question, the archive, or a task for a person in the Workflow Inbox when the agent is unsure. What the person decides becomes a precedent in an IRIS Vector Search knowledge base, and the agent decides the next email like it the same way. Every decision, every tool call the agent made and every draft is a row in IRIS, and every step is a message in the production's trace.
+An InterSystems IRIS Interoperability production that reads a mailbox, asks an AI Hub agent what each message needs, and acts on the answer: an alert for urgent mail, a draft reply for a quick question, the archive, or a task for a person in the Workflow Inbox when the agent is unsure. What the person decides becomes a precedent in an IRIS Vector Search knowledge base, and the agent decides the next email like it the same way. Every decision, every tool call the agent made and every draft is a row in IRIS, and every step is a message in the production's trace. A Business Operation written in Java with PEX also appends every decision to a JSON Lines file, for tools outside IRIS.
 
 It is modeled on the inbox monitor I run for my own freelance work, where pitches to editors, client threads, hosting notices and newsletters land in one mailbox and the urgent ones must not wait. Built for the InterSystems "AI Agents in Interoperability Workflows" contest on the AI Hub Early Access build.
 
@@ -21,8 +21,8 @@ Online demo: http://14.225.224.76:8091/ (send a sample or your own email to the 
                                               (ObjectScript)    │           │ %AI.Agent "Classifier"      │
                                                                 │  Verdict  │  LookupContact   (SQL tool) │
                    Triage_Data.Decision ◄───────────────────────┘           │  SenderHistory   (SQL tool) │
-                              │                                             │  search_precedents (vector) │
-                              │                                             │  RecordDecision             │
+                              ├──► Triage.Export (Java, PEX)                │  search_precedents (vector) │
+                              │    decisions.jsonl, one line each           │  RecordDecision             │
             ┌─────────────────┼──────────────────┬─────────────────┐        │ policies: one decision,     │
             ▼                 ▼                  ▼                 ▼        │           audit every call  │
       Triage.Alert      Triage.Review      Triage.Draft      Triage.Archive └─────────────────────────────┘
@@ -45,6 +45,7 @@ Online demo: http://14.225.224.76:8091/ (send a sample or your own email to the 
 
    <img src="docs/workflow.png" alt="A review task in the Workflow Inbox: the agent's verdict and reason, and the Alert, Draft and Archive actions" width="760">
 8. **A person's decision becomes a precedent (IRIS Vector Search).** `Triage.Agent.Precedents` is an AI Hub knowledge base, `%AI.RAG.KnowledgeBase` over `%AI.RAG.VectorStore.IRIS`: the table `Triage_Data.Precedent` with 384-dimension vectors from the FastEmbed model that ships with AI Hub, so no embedding key is needed (the model, about 87 MB, is downloaded once, on first use). The agent operation opens it once, gives the agent its `search_precedents` tool, and indexes every email the agent decides together with the decision. When a person decides an email in the Workflow Inbox, `Triage.Review` sends the decision back to `Triage.Agent`, which re-indexes that email as "Decided by a person in review". The classifier's first rule is to follow such a precedent. In the test run below, the follow-up from a stranger went to review; after it was archived in the Workflow Inbox, the same email sent twice more was archived by the agent with confidence 0.95, and its reason cited the person's decision.
+9. **A Java operation exports every decision (PEX).** `Triage.Export` is a Business Operation written in Java with the Production EXtension framework: `java/triage/ExportOperation.java` extends `com.intersystems.enslib.pex.BusinessOperation`, and the production hosts it as `EnsLib.PEX.BusinessOperation` on the `%Java Server` external language server. Both processes send it every decision asynchronously, after the routing, and it appends one JSON object per line to `decisions.jsonl`: the time, the decision id, the Message-ID, the sender, the subject, the category, the urgency, the action, the reason and the confidence; the body stays in IRIS. The file is for tools outside IRIS, such as `jq`, a spreadsheet or a log shipper. The operation reads the IRIS message through its proxy (`IRISObject.getString("Category")`), so no message class is repeated in Java. The install compiles it with `javac` from the JDK that ships in the AI Hub images (Temurin 11) into `mgr/iris-inbox-triage/classes`, and the file is `mgr/iris-inbox-triage/decisions.jsonl` (the item's `%remoteSettings`, `Path=...`).
 
 ## Tracing the agent with Interoperability
 
@@ -94,10 +95,11 @@ The build installs IPM and loads the module with `zpm "load"`; the production st
 
 - **Interoperability → View → Messages**: open any `Triage.Msg.Email` and its trace: the agent's request, its verdict with the reason and statistics, and the operation that acted on it.
 
-  <img src="docs/trace.png" alt="Visual Trace of one email read over IMAP: service, BPL process, the agent's verdict with its model, tokens and prompt version, the alert" width="760">
+  <img src="docs/trace.png" alt="Visual Trace of one email read over IMAP: service, BPL process, the agent's verdict with its model, tokens and prompt version, the alert, the decision sent to the Java export" width="880">
 - **Workflow Inbox** at http://localhost:52773/csp/user/_DeepSee.UserPortal.Workflow.zen (the Analytics User Portal; the setup enables Analytics for `/csp/user`): the review task for the unclear email. Click it, **Accept**, then **Alert**, **Draft** or **Archive**. From the command line, `scripts/review.sh` lists the open tasks and `scripts/review.sh Archive` completes them the same way.
 - **Interoperability → Build → Business Processes → Triage.Process.TriageBPL**: the workflow diagram.
 - **Interoperability → Configure → Production**: the running production; the IMAP service shows the server and the mailbox it polls.
+- **The decision feed** written by the Java operation: `docker exec iris-inbox-triage tail -n 3 /usr/irissys/mgr/iris-inbox-triage/decisions.jsonl`.
 - **System Explorer → SQL**:
 
 ```sql
@@ -127,7 +129,7 @@ zpm "install iris-inbox-triage"
 do ##class(Ens.Director).StartProduction("Triage.Production")
 ```
 
-Set `GEMINI_API_KEY` and the mail variables below in the environment of IRIS before the install; if you set them later, run `do ##class(Triage.Setup).Configure()`. Without `MAIL_HOST` the production looks for a server named `mail`, and the IMAP service logs an error until it finds one. From then on the production starts with IRIS. The folder service stays off here, because `/data/inbox` exists only in the Docker image.
+Set `GEMINI_API_KEY` and the mail variables below in the environment of IRIS before the install; if you set them later, run `do ##class(Triage.Setup).Configure()`. Without `MAIL_HOST` the production looks for a server named `mail`, and the IMAP service logs an error until it finds one. From then on the production starts with IRIS. The folder service stays off here, because `/data/inbox` exists only in the Docker image. The install compiles the Java operation with the `javac` of the AI Hub image; on an instance without a JDK, `Triage.Export` is not built and does not start, and the rest of the production works without it.
 
 ## Configuration
 
@@ -150,7 +152,7 @@ To use another provider, change `PROVIDER`, `MODEL` and `APIKEY` in `Triage.Agen
 
 ```
 src/cls/Triage/
-  Production.cls            the production: 3 services, 3 processes, 5 operations (one of them the Workflow role)
+  Production.cls            the production: 3 services, 3 processes, 6 operations (one of them the Workflow role, one in Java)
   Adapter/IMAPInbound.cls   custom inbound adapter: IMAP in Embedded Python (imaplib), flag after processing
   Service/IMAPInbox.cls     IMAP mailbox -> Triage.Msg.Email
   Service/MailInbox.cls     POP3 mailbox -> Triage.Msg.Email (MAIL_PROTOCOL=pop3)
@@ -171,7 +173,8 @@ src/cls/Triage/
   Policy/Audit.cls          %AI.Policy.Audit: every tool call -> Triage_Data.ToolCall
   Msg/                      Email (request), Verdict (agent response), Decision (to the operations)
   Data/                     Decision, Contact, Alert, Draft, ToolCall tables
-  Setup.cls                 demo contacts, the reviewer role; runtime configuration from the environment
+  Setup.cls                 demo contacts, the reviewer role, the Java build; runtime configuration from the environment
+java/triage/ExportOperation.java  Triage.Export: a PEX Business Operation in Java, every decision as a JSON line
 python/triage_mail.py       MIME decoding with Python's email package; IPM copies it to the IRIS python directory
 tests/Triage/Test/          %UnitTest cases, run by scripts/test.sh
 data/samples/               nine made-up emails: HTML-only mail, a PDF attachment, one that needs a person
@@ -210,6 +213,7 @@ Built on 2026.3.0AI.154.0 and re-tested on 2027.1.0AI.109.0, where it runs witho
 - In this build `%AI.RAG.Embedding.FastEmbed.EmbedBatch()` answers "use the Rust bridge directly", so the bundled embedding model is reachable only through `%AI.RAG.KnowledgeBase` (indexing and its search tool), not from ObjectScript. The knowledge base splits text into chunks by paragraph, so each precedent is a single paragraph (line breaks become spaces) that starts with its decision and keeps the email short: otherwise the chunk a search returns may not say what was decided.
 - A knowledge-base tool added with `AddToAgent()` is not covered by the policies declared in the toolset. The agent's tool manager takes an audit policy of its own (`SetAuditPolicy`), but that one sees the toolset's tools too, and they were logged twice; the copy attached there logs only `search_` tools (`Triage.Policy.Audit.ToolPrefix`).
 - An agent that can read its own earlier decisions can take them for evidence. In testing, an unknown sender who claimed an earlier call and asked for bank details was first classified as a client thread; the next email from the same domain was then decided with the reason "prior history as a client", citing that first decision. The instructions now say that only `LookupContact` makes a sender known, and such an email goes to a person.
+- The `%Java Server` external language server starts with only the JDBC driver on its classpath, so a PEX class fails at start with `NoClassDefFoundError: com/intersystems/enslib/pex/BusinessOperation` unless the item's `%gatewayExtraClasspaths` also lists `dev/java/lib/1.8/intersystems-pex-1.0.0-shaded.jar` (entries are separated by `|`). `Triage.Setup.Configure` puts the PEX jar and the compiled classes there.
 - `EnsLib.EMail.InboundAdapter` skips a message on later polls once the service returned an error for it. The mail service therefore never returns an error: a message it cannot parse still goes to the process with its sender and subject, and the agent decides it like any other.
 
 ## Author

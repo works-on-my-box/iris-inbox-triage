@@ -3,7 +3,7 @@
   <Document name="iris-inbox-triage.ZPM">
     <Module>
       <Name>iris-inbox-triage</Name>
-      <Version>0.5.6</Version>
+      <Version>0.5.7</Version>
       <Description>Inbox triage with an IRIS AI Hub agent: an Interoperability production reads a mailbox, an agent decides what each email needs, and the decision is routed to an alert, a review queue, a draft reply or the archive.</Description>
       <Keywords>ai,agent,ai-hub,interoperability,email,triage</Keywords>
       <Author>
@@ -15,7 +15,9 @@
       <SystemRequirements Version=">=2026.3" Interoperability="enabled"/>
       <Resource Name="Triage.PKG" />
       <FileCopy Name="python/" Target="${mgrdir}python/" />
+      <FileCopy Name="java/" Target="${mgrdir}iris-inbox-triage/java/" />
       <UnitTest Name="/tests/" Package="Triage.Test" Phase="test" />
+      <Invoke Class="Triage.Setup" Method="BuildJava" CheckStatus="true" />
       <Invoke Class="Triage.Setup" Method="Seed" CheckStatus="true" />
       <Invoke Class="Triage.Setup" Method="Reviewers" CheckStatus="true" />
       <Invoke Class="Triage.Setup" Method="Configure" CheckStatus="true" />

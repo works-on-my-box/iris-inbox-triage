@@ -15,7 +15,7 @@ XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 <property name='Verdict' type='Triage.Msg.Verdict' instantiate='0' />
 <property name='Decision' type='Triage.Msg.Decision' instantiate='0' />
 </context>
-<sequence xend='200' yend='1550' >
+<sequence xend='200' yend='1650' >
 <scope xpos='200' ypos='250' xend='200' yend='450' >
 <annotation>If the agent operation fails even after its retries, the email still reaches a person: the fault handler records a fallback verdict.</annotation>
 <call name='Ask the agent' target='Triage.Agent' async='0' timeout='300' xpos='200' ypos='250' >
@@ -78,6 +78,12 @@ XData BPL [ XMLNamespace = "http://www.intersystems.com/bpl" ]
 </call>
 </true>
 </if>
+<call name='Export' target='Triage.Export' async='1' xpos='200' ypos='1550' >
+<annotation>A Java operation (PEX) appends the decision to a JSON Lines file for tools outside IRIS.</annotation>
+<request type='Triage.Msg.Decision' >
+<assign property="callrequest" value="context.Decision" action="set" />
+</request>
+</call>
 </sequence>
 </process>
 }

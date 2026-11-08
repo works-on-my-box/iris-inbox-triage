@@ -9,7 +9,7 @@ Method TestProductionItemsResolve()
     Set production = ##class(Ens.Config.Production).%OpenId("Triage.Production")
     Do $$$AssertTrue($IsObject(production), "production definition is loaded")
     Quit:'$IsObject(production)
-    Do $$$AssertEquals(production.Items.Count(), 11, "three services (IMAP, POP3, folder), three processes (two triage, one review), five operations (four, plus the workflow one)")
+    Do $$$AssertEquals(production.Items.Count(), 12, "three services (IMAP, POP3, folder), three processes (two triage, one review), six operations (four, the Java export, plus the workflow one)")
     For i = 1:1:production.Items.Count() {
         Set item = production.Items.GetAt(i)
         Do $$$AssertTrue(##class(%Dictionary.CompiledClass).%ExistsId(item.ClassName), item.Name_" -> "_item.ClassName_" is compiled")

@@ -1,6 +1,8 @@
 /// Inbox triage: mailbox (or inbox folder) -> agent verdict -> alert, review by a person (Workflow), draft reply or archive.
 /// The mailbox is read over IMAP (Triage.Inbox.IMAP, a custom adapter in Embedded Python); the POP3 service
 /// Triage.Inbox.Mail is the alternative and stays disabled unless MAIL_PROTOCOL=pop3 (Triage.Setup.Configure).
+/// Triage.Export is a Business Operation in Java (PEX, java/triage/ExportOperation.java) that appends every decision to a
+/// JSON Lines file; its classpath and the file are system default settings (Triage.Setup.Configure).
 Class Triage.Production Extends Ens.Production
 {
 
@@ -55,6 +57,10 @@ XData ProductionDefinition
     <Setting Target="Host" Name="AutoCreateRole">1</Setting>
   </Item>
   <Item Name="Triage.Archive" Category="" ClassName="Triage.Operation.Archive" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+  </Item>
+  <Item Name="Triage.Export" Category="" ClassName="EnsLib.PEX.BusinessOperation" PoolSize="1" Enabled="true" Foreground="false" LogTraceEvents="false" Schedule="">
+    <Setting Target="Host" Name="%gatewayName">%Java Server</Setting>
+    <Setting Target="Host" Name="%remoteClassname">triage.ExportOperation</Setting>
   </Item>
 </Production>
 }
