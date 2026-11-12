@@ -229,6 +229,7 @@ Where each technology bonus of the contest is in this app:
 | Embedded Python | The IMAP adapter and [`python/triage_mail.py`](python/triage_mail.py), point 1 |
 | IRIS Vector Search | [`Agent/Precedents.cls`](src/cls/Triage/Agent/Precedents.cls), an AI Hub knowledge base on `%AI.RAG.VectorStore.IRIS`, point 8 |
 | Bugs in AI Hub | [ai-hub-eap-bugreports #7](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/7) and [#8](https://github.com/intersystems-community/ai-hub-eap-bugreports/issues/8) |
+| Bug in Embedded Python | [python-bugreports #33](https://github.com/intersystems-community/python-bugreports/issues/33): the text of a Python exception reaches ObjectScript as UTF-8 bytes |
 | Docker | [`Dockerfile`](Dockerfile) and [`docker-compose.yml`](docker-compose.yml) |
 | IPM | [`module.xml`](module.xml); `zpm "install iris-inbox-triage"` |
 | Online demo | http://14.225.224.76:8091/ |
