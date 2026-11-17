@@ -10,8 +10,6 @@ Video demo (1:38, captions, no voice-over): https://youtu.be/ht88cOoM4Ng
 
 Article on the Developer Community: https://community.intersystems.com/post/inbox-triage-iris-ai-hub-agent-how-it-works-and-how-run-it
 
-Online demo: http://14.225.224.76:8091/ (send a sample or your own email to the test mailbox and see what the agent decided)
-
 ## How it works
 
 ```
@@ -232,7 +230,7 @@ Where each technology bonus of the contest is in this app:
 | Bugs in Embedded Python | [python-bugreports #33](https://github.com/intersystems-community/python-bugreports/issues/33): the text of a Python exception reaches ObjectScript as UTF-8 bytes; [python-bugreports #42](https://github.com/intersystems-community/python-bugreports/issues/42): a `str` or `int` subclass such as `enum.StrEnum` is stored as "N@%SYS.Python" by SQL and saved properties; [python-bugreports #43](https://github.com/intersystems-community/python-bugreports/issues/43): a method saved in a variable can be called only once; [python-bugreports #44](https://github.com/intersystems-community/python-bugreports/issues/44): the process dies with signal 11 when a collection or `%DynamicObject` is used after its `KeyError` was caught |
 | Docker | [`Dockerfile`](Dockerfile) and [`docker-compose.yml`](docker-compose.yml) |
 | IPM | [`module.xml`](module.xml); `zpm "install iris-inbox-triage"` |
-| Online demo | http://14.225.224.76:8091/ |
+| Online demo | Ran from November 4 to November 17, 2026, for the contest; now closed |
 | Community idea | [DPI-I-689](https://ideas.intersystems.com/ideas/DPI-I-689), section [Tracing the agent with Interoperability](#tracing-the-agent-with-interoperability) |
 | Articles | [How it works and how to run it](https://community.intersystems.com/post/inbox-triage-iris-ai-hub-agent-how-it-works-and-how-run-it), [What I ran into on the Early Access builds](https://community.intersystems.com/post/building-iris-ai-hub-agent-early-access-builds-what-i-ran) |
 | Video | https://youtu.be/ht88cOoM4Ng, and as an [MP4 to download](https://github.com/works-on-my-box/iris-inbox-triage/releases/download/media-v1/iris-inbox-triage-demo.mp4) |
